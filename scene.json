@@ -1,0 +1,386 @@
+{
+  "version": 1,
+  "title": "Fieldwork / operational briefing",
+  "objects": [
+    {
+      "id": "briefing",
+      "type": "board",
+      "x": -1900,
+      "y": -550,
+      "w": 1600,
+      "h": 900,
+      "props": {
+        "label": "01 / WORKSPACE",
+        "title": "Operational overview",
+        "text": "A spatial document that can evolve in response to your exploration."
+      }
+    },
+    {
+      "id": "summary",
+      "type": "text",
+      "x": 80,
+      "y": 290,
+      "w": 660,
+      "h": 475,
+      "props": {
+        "label": "CONTEXT",
+        "title": "Explore the system",
+        "text": "Click a board or object on the map to fly to it. Scroll to zoom around the cursor. The risk card changes representation as you approach it. Details are loaded when you get close."
+      },
+      "parent": "briefing"
+    },
+    {
+      "id": "risk",
+      "type": "metric",
+      "x": 795,
+      "y": 290,
+      "w": 725,
+      "h": 475,
+      "props": {
+        "label": "RISK / SUMMARY",
+        "title": "Critical findings",
+        "value": 7,
+        "buttons": [
+          {
+            "label": "Load details",
+            "event": "details"
+          }
+        ]
+      },
+      "variants": [
+        {
+          "minZoom": 0.8,
+          "type": "metric",
+          "props": {
+            "text": "Three services need review. Details can be discovered by zooming or clicking."
+          }
+        }
+      ],
+      "parent": "briefing"
+    },
+    {
+      "id": "services",
+      "type": "board",
+      "x": 80,
+      "y": -550,
+      "w": 1600,
+      "h": 900,
+      "props": {
+        "label": "02 / TELEMETRY",
+        "title": "Service health",
+        "text": "Live data can update individual components without rebuilding the scene."
+      }
+    },
+    {
+      "id": "trend",
+      "type": "chart",
+      "x": 80,
+      "y": 290,
+      "w": 1440,
+      "h": 475,
+      "props": {
+        "label": "FINDINGS BY SERVICE",
+        "title": "Current distribution",
+        "items": [
+          {
+            "label": "API gateway",
+            "value": 4
+          },
+          {
+            "label": "Identity",
+            "value": 2
+          },
+          {
+            "label": "Storage",
+            "value": 1
+          }
+        ],
+        "buttons": [
+          {
+            "label": "Refresh sample",
+            "event": "refresh"
+          }
+        ]
+      },
+      "parent": "services"
+    },
+    {
+      "id": "notes",
+      "type": "text",
+      "x": -850,
+      "y": 700,
+      "w": 1400,
+      "h": 510,
+      "props": {
+        "label": "03 / INTERACTION",
+        "title": "Human in control",
+        "text": "Pan or zoom to take control of the camera. Follow can be enabled again explicitly. The scene can still receive data updates while automatic navigation is disabled."
+      }
+    }
+  ],
+  "behaviours": [
+    {
+      "id": "discover",
+      "on": {
+        "event": "camera.enter",
+        "target": "risk",
+        "minZoom": 1.25
+      },
+      "actions": [
+        {
+          "command": "data.fetch",
+          "source": "risk-details"
+        }
+      ],
+      "once": true
+    },
+    {
+      "id": "details-click",
+      "on": {
+        "event": "widget.action",
+        "target": "risk",
+        "name": "details"
+      },
+      "actions": [
+        {
+          "command": "data.fetch",
+          "source": "risk-click"
+        }
+      ]
+    },
+    {
+      "id": "refresh",
+      "on": {
+        "event": "widget.action",
+        "target": "trend",
+        "name": "refresh"
+      },
+      "actions": [
+        {
+          "command": "data.fetch",
+          "source": "telemetry"
+        }
+      ]
+    }
+  ],
+  "sources": {
+    "risk-details": {
+      "kind": "inline",
+      "commands": [
+        {
+          "command": "object.update",
+          "target": "risk",
+          "props": {
+            "value": 9
+          }
+        },
+        {
+          "command": "object.upsert",
+          "object": {
+            "id": "details",
+            "type": "board",
+            "x": 1900,
+            "y": -550,
+            "w": 1600,
+            "h": 900,
+            "props": {
+              "label": "04 / DISCOVERED",
+              "title": "Affected services",
+              "text": "This board was created by a JSON response, not embedded as HTML."
+            }
+          }
+        },
+        {
+          "command": "object.upsert",
+          "object": {
+            "id": "findings",
+            "type": "table",
+            "x": 80,
+            "y": 290,
+            "w": 1440,
+            "h": 475,
+            "props": {
+              "title": "Prioritized findings",
+              "columns": [
+                "Service",
+                "Severity",
+                "Open"
+              ],
+              "rows": [
+                [
+                  "API gateway",
+                  "Critical",
+                  5
+                ],
+                [
+                  "Identity",
+                  "Critical",
+                  3
+                ],
+                [
+                  "Storage",
+                  "Critical",
+                  1
+                ]
+              ],
+              "buttons": [
+                {
+                  "label": "Return to overview",
+                  "event": "return"
+                }
+              ]
+            },
+            "parent": "details"
+          }
+        },
+        {
+          "command": "object.move",
+          "target": "notes",
+          "x": 300,
+          "y": 850
+        },
+        {
+          "command": "behaviour.upsert",
+          "behaviour": {
+            "id": "return-home",
+            "on": {
+              "event": "widget.action",
+              "target": "findings",
+              "name": "return"
+            },
+            "actions": [
+              {
+                "command": "camera.overview"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "risk-click": {
+      "kind": "inline",
+      "commands": [
+        {
+          "command": "object.update",
+          "target": "risk",
+          "props": {
+            "value": 9
+          }
+        },
+        {
+          "command": "object.upsert",
+          "object": {
+            "id": "details",
+            "type": "board",
+            "x": 1900,
+            "y": -550,
+            "w": 1600,
+            "h": 900,
+            "props": {
+              "label": "04 / DISCOVERED",
+              "title": "Affected services",
+              "text": "This board was created by a JSON response, not embedded as HTML."
+            }
+          }
+        },
+        {
+          "command": "object.upsert",
+          "object": {
+            "id": "findings",
+            "type": "table",
+            "x": 80,
+            "y": 290,
+            "w": 1440,
+            "h": 475,
+            "props": {
+              "title": "Prioritized findings",
+              "columns": [
+                "Service",
+                "Severity",
+                "Open"
+              ],
+              "rows": [
+                [
+                  "API gateway",
+                  "Critical",
+                  5
+                ],
+                [
+                  "Identity",
+                  "Critical",
+                  3
+                ],
+                [
+                  "Storage",
+                  "Critical",
+                  1
+                ]
+              ],
+              "buttons": [
+                {
+                  "label": "Return to overview",
+                  "event": "return"
+                }
+              ]
+            },
+            "parent": "details"
+          }
+        },
+        {
+          "command": "object.move",
+          "target": "notes",
+          "x": 300,
+          "y": 850
+        },
+        {
+          "command": "behaviour.upsert",
+          "behaviour": {
+            "id": "return-home",
+            "on": {
+              "event": "widget.action",
+              "target": "findings",
+              "name": "return"
+            },
+            "actions": [
+              {
+                "command": "camera.overview"
+              }
+            ]
+          }
+        },
+        {
+          "command": "camera.focus",
+          "target": "details"
+        }
+      ]
+    },
+    "telemetry": {
+      "kind": "inline",
+      "commands": [
+        {
+          "command": "object.update",
+          "target": "trend",
+          "props": {
+            "items": [
+              {
+                "label": "API gateway",
+                "value": 5
+              },
+              {
+                "label": "Identity",
+                "value": 3
+              },
+              {
+                "label": "Storage",
+                "value": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "camera": {
+    "initial": "overview"
+  }
+}

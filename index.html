@@ -1,0 +1,442 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Fieldwork — spatial workspace</title><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'"><style>
+:root{
+  --ink:#0B0F16;
+  --ink2:#121A26;
+  --ink3:#172233;
+  --line:#283346;
+  --paper:#ECE5D6;
+  --dim:#8D97A8;
+  --sig:#F0B44C;   /* signal / focal highlight */
+  --sense:#7FB0DA; /* geometry / camera / sensors */
+  --earth:#D27A45; /* clock / grounding */
+  --haze:#B486E6;  /* transforms / reveals */
+  --ok:#5CCB8A;    /* active / verified */
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0}
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:var(--body);
+  overflow:hidden;
+  user-select:auto;
+}
+
+/* Stage & World */
+#stage{position:fixed;inset:0;overflow:hidden;cursor:default;touch-action:none}
+#stage.explore{cursor:grab}
+#stage.explore.drag{cursor:grabbing}
+#bg{position:absolute;inset:0;width:100%;height:100%;display:block}
+#world{position:absolute;left:0;top:0;transform-origin:0 0}
+#macro{position:absolute;left:-14000px;top:-14000px;width:28000px;height:28000px;overflow:visible;pointer-events:none}
+
+/* Drafting Boards */
+.board{
+  position:absolute;
+  width:1600px;
+  height:900px;
+  transform-origin:800px 450px;
+  background:radial-gradient(ellipse at 50% 45%, #121B29, #0B0F16);
+  border:1px solid rgba(40,51,70,.85);
+  border-radius:14px;
+  box-shadow:0 30px 100px rgba(0,0,0,.6);
+}
+.board.clickable{cursor:pointer}
+.board.clickable:hover{border-color:var(--sig);box-shadow:0 0 0 2px rgba(240,180,76,.35),0 30px 100px rgba(0,0,0,.65)}
+.board>svg{position:absolute;inset:0;width:1600px;height:900px;overflow:visible;pointer-events:none}
+.board .h{position:absolute}
+
+/* Architectural Corner Marks & Title Block */
+.sheet-mark{position:absolute;width:28px;height:28px;border-color:var(--line);border-style:solid;border-width:0;pointer-events:none}
+.tl{left:-7px;top:-7px;border-left-width:2px;border-top-width:2px}
+.tr{right:-7px;top:-7px;border-right-width:2px;border-top-width:2px}
+.bl{left:-7px;bottom:-7px;border-left-width:2px;border-bottom-width:2px}
+.br{right:-7px;bottom:-7px;border-right-width:2px;border-bottom-width:2px}
+.tblock{
+  position:absolute;right:28px;bottom:20px;
+  font:500 14px/1 var(--mono);color:var(--dim);
+  letter-spacing:.14em;text-transform:uppercase;
+  display:flex;gap:18px;border-top:1px solid var(--line);padding-top:10px;
+  pointer-events:none;
+}
+.tblock b{color:var(--paper);font-weight:500}
+
+/* Board Typography */
+.eyebrow{left:84px;top:56px;font:500 17px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--sig)}
+.h2{left:84px;top:88px;font:700 56px/1.04 var(--display);letter-spacing:-.02em;max-width:1180px;text-wrap:balance}
+.txt{font:400 23px/1.38 var(--body);color:var(--paper)}
+.small{font:400 18px/1.4 var(--body);color:var(--dim)}
+.code{
+  font:500 18px/1.45 var(--mono);
+  background:var(--ink);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:14px 18px;
+  color:var(--paper);
+}
+.card{
+  background:rgba(18,26,38,.92);
+  border:1.5px solid var(--line);
+  border-radius:14px;
+  padding:20px 22px;
+  box-shadow:0 12px 32px rgba(0,0,0,.35);
+}
+.pill{
+  display:inline-block;
+  border:1.5px solid currentColor;
+  border-radius:999px;
+  padding:4px 12px;
+  font:500 14px/1.1 var(--mono);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+/* SVG Styles */
+svg text{font-family:var(--mono);fill:var(--paper)}
+svg .t-lab{font:500 19px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+svg .t-sm{font:400 16px var(--mono);fill:var(--dim)}
+svg .t-disp{font:700 28px var(--display)}
+.stroke{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.s-sig{stroke:var(--sig)}.s-sense{stroke:var(--sense)}.s-earth{stroke:var(--earth)}.s-haze{stroke:var(--haze)}.s-ok{stroke:var(--ok)}.s-line{stroke:var(--line)}.s-dim{stroke:var(--dim)}.s-paper{stroke:var(--paper)}
+.f-sig{fill:var(--sig)}.f-sense{fill:var(--sense)}.f-earth{fill:var(--earth)}.f-haze{fill:var(--haze)}.f-ok{fill:var(--ok)}.f-ink{fill:var(--ink)}.f-ink2{fill:var(--ink2)}.f-paper{fill:var(--paper)}.f-dim{fill:var(--dim)}
+.c-sig{color:var(--sig)}.c-sense{color:var(--sense)}.c-earth{color:var(--earth)}.c-haze{color:var(--haze)}.c-ok{color:var(--ok)}.c-dim{color:var(--dim)}
+
+/* Reveal Vocabulary */
+[data-c]{
+  transition:
+    opacity .65s ease,
+    transform .9s cubic-bezier(.2,.9,.2,1),
+    clip-path 1s cubic-bezier(.7,0,.2,1),
+    stroke-dashoffset 1.3s cubic-bezier(.65,0,.25,1);
+}
+svg [data-c]{transform-box:fill-box;transform-origin:center}
+.rv{opacity:0;transform:translateY(22px)}
+.pop{opacity:0;transform:scale(.45)}
+.pop.on{transition:opacity .38s ease, transform .75s cubic-bezier(.22,1,.36,1)}
+.fade{opacity:0}
+.slide{opacity:0;transform:translateX(-46px)}
+.mask{clip-path:inset(-10% 100% -10% 0)}
+.mask.on{clip-path:inset(-10% -4% -10% -4%)}
+.draw{stroke-dasharray:1 1;stroke-dashoffset:1}
+.draw.on{stroke-dashoffset:0}
+path.draw[marker-end]:not(.on),path.draw[marker-start]:not(.on){opacity:0}
+.on{opacity:1;transform:none}
+
+/* Ambient Motion */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinr{to{transform:rotate(-360deg)}}
+@keyframes breathe{50%{opacity:.4}}
+@keyframes bob{50%{transform:translateY(-10px)}}
+@keyframes dashflow{to{stroke-dashoffset:-40}}
+.spin-slow{animation:spin 50s linear infinite;transform-box:fill-box;transform-origin:center}
+.spin-rev{animation:spinr 36s linear infinite;transform-box:fill-box;transform-origin:center}
+.breathe.on{animation:breathe 2.6s ease-in-out infinite}
+.bob.on{animation:bob 3.2s ease-in-out infinite}
+.flow{stroke-dasharray:8 12;animation:dashflow 1.4s linear infinite}
+
+/* Top Telemetry / Hint Pill */
+#hud{
+  position:fixed;top:14px;left:16px;right:16px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  pointer-events:none;z-index:5;
+}
+.pillbar{
+  font:500 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);
+  background:rgba(18,26,38,.86);
+  border:1px solid var(--line);
+  padding:7px 12px;border-radius:999px;
+  backdrop-filter:blur(6px);
+  white-space:nowrap;
+}
+.pillbar b{color:var(--sig);font-weight:500}
+#hint{transition:opacity .35s}
+#hint.hide{opacity:0}
+
+.btn{
+  appearance:none;border:1px solid var(--line);
+  background:var(--ink2);color:var(--paper);
+  height:36px;min-width:36px;border-radius:8px;
+  font:500 13px var(--mono);letter-spacing:.05em;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  cursor:pointer;padding:0 10px;
+  transition:border-color .15s, color .15s;
+}
+.btn:hover{border-color:var(--dim)}
+.btn:focus-visible{outline:2px solid var(--sig);outline-offset:2px}
+.btn[aria-pressed="true"]{border-color:var(--sig);color:var(--sig)}
+
+/* Fieldwork: arbitrary bounds and native interactive components. */
+#stage{cursor:grab}#stage.drag{cursor:grabbing}#world{will-change:auto}.node{position:absolute;transform-origin:0 0;user-select:text;cursor:default}.node[hidden]{display:none}.node.clickable{cursor:pointer}.node:focus-visible{outline:3px solid var(--sig);outline-offset:6px}.node.card{padding:0;overflow:hidden}.node.board{overflow:visible}.node-content{position:relative;height:100%;padding:40px 44px;overflow:hidden;display:flex;flex-direction:column;gap:16px}.board>.node-content{padding:56px 80px;overflow:visible}.node-label{font:500 18px var(--mono);letter-spacing:.15em;text-transform:uppercase;color:var(--sig)}.node-title{font:700 42px/1.1 var(--display);margin:0;letter-spacing:-.025em}.board .node-title{font-size:60px}.node-text{font:400 26px/1.4 var(--body);color:var(--dim);margin:0;max-width:100%;overflow-wrap:anywhere}.board .node-text{max-width:1300px}.metric{font:700 100px/1 var(--display);font-variant-numeric:tabular-nums}.node-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:auto}.node-actions .btn{height:auto;padding:14px 20px;font-size:22px;white-space:normal;cursor:pointer}.node-list{font:24px/1.5 var(--body);margin:0;padding-left:28px}.chart{display:grid;gap:18px;margin-top:10px}.bar-row{display:grid;grid-template-columns:220px 1fr 70px;gap:20px;align-items:center;font:23px var(--body)}.bar-track{height:26px;background:var(--line);border-radius:4px;overflow:hidden}.bar-value{height:100%;background:var(--sense);border-radius:4px}.bar-number{font:23px var(--mono);text-align:right}.table-wrap{overflow:auto;max-height:250px;touch-action:pan-y}table{border-collapse:collapse;width:100%;font:24px var(--body)}td,th{text-align:left;padding:14px;border-bottom:1px solid var(--line)}th{font:500 18px var(--mono);color:var(--dim);text-transform:uppercase}#hud .pillbar{overflow:hidden;text-overflow:ellipsis;max-width:45vw}#hud{top:14px}#toolbar{position:fixed;bottom:0;left:0;right:0;display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:12px 16px;background:rgba(11,15,22,.96);border-top:1px solid var(--line);z-index:9}#status{font:12px var(--mono);color:var(--paper);flex:1;min-width:100px}#scene-url{width:155px;max-width:24vw;background:var(--ink2);border:1px solid var(--line);color:var(--paper);border-radius:8px;padding:9px;font:12px var(--mono)}#count{font:12px var(--mono);color:var(--dim)}@media(max-width:650px){#camHud{display:none}#toolbar{gap:5px;padding:8px}#scene-url{width:95px}#status{flex-basis:100%}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style></head><body><div id="stage" class="explore" aria-label="Spatial workspace"><canvas id="bg" aria-hidden="true"></canvas><div id="world"></div></div><div id="hud"><div class="pillbar" id="title">Fieldwork</div><div class="pillbar" id="camHud">CAM <b id="camReadout"></b></div><div class="pillbar">Scroll / drag · M: map · Esc: take control</div></div><div id="toolbar"><button class="btn" id="map" type="button">Map</button><button class="btn" id="follow" type="button" aria-pressed="true">Follow: on</button><button class="btn" id="import" type="button">Import JSON</button><input id="file" type="file" accept="application/json,.json" hidden><input id="scene-url" aria-label="Scene URL" placeholder="./scene-http.json"><button class="btn" id="load-url" type="button">Load URL</button><button class="btn" id="reset" type="button">Reset</button><span id="count"></span><span id="status" role="status"></span></div><script type="application/json" id="demo">{"version": 1, "title": "Fieldwork / operational briefing", "objects": [{"id": "briefing", "type": "board", "x": -1900, "y": -550, "w": 1600, "h": 900, "props": {"label": "01 / WORKSPACE", "title": "Operational overview", "text": "A spatial document that can evolve in response to your exploration."}}, {"id": "summary", "type": "text", "x": 80, "y": 290, "w": 660, "h": 475, "props": {"label": "CONTEXT", "title": "Explore the system", "text": "Click a board or object on the map to fly to it. Scroll to zoom around the cursor. The risk card changes representation as you approach it. Details are loaded when you get close."}, "parent": "briefing"}, {"id": "risk", "type": "metric", "x": 795, "y": 290, "w": 725, "h": 475, "props": {"label": "RISK / SUMMARY", "title": "Critical findings", "value": 7, "buttons": [{"label": "Load details", "event": "details"}]}, "variants": [{"minZoom": 0.8, "type": "metric", "props": {"text": "Three services need review. Details can be discovered by zooming or clicking."}}], "parent": "briefing"}, {"id": "services", "type": "board", "x": 80, "y": -550, "w": 1600, "h": 900, "props": {"label": "02 / TELEMETRY", "title": "Service health", "text": "Live data can update individual components without rebuilding the scene."}}, {"id": "trend", "type": "chart", "x": 80, "y": 290, "w": 1440, "h": 475, "props": {"label": "FINDINGS BY SERVICE", "title": "Current distribution", "items": [{"label": "API gateway", "value": 4}, {"label": "Identity", "value": 2}, {"label": "Storage", "value": 1}], "buttons": [{"label": "Refresh sample", "event": "refresh"}]}, "parent": "services"}, {"id": "notes", "type": "text", "x": -850, "y": 700, "w": 1400, "h": 510, "props": {"label": "03 / INTERACTION", "title": "Human in control", "text": "Pan or zoom to take control of the camera. Follow can be enabled again explicitly. The scene can still receive data updates while automatic navigation is disabled."}}], "behaviours": [{"id": "discover", "on": {"event": "camera.enter", "target": "risk", "minZoom": 1.25}, "actions": [{"command": "data.fetch", "source": "risk-details"}], "once": true}, {"id": "details-click", "on": {"event": "widget.action", "target": "risk", "name": "details"}, "actions": [{"command": "data.fetch", "source": "risk-click"}]}, {"id": "refresh", "on": {"event": "widget.action", "target": "trend", "name": "refresh"}, "actions": [{"command": "data.fetch", "source": "telemetry"}]}], "sources": {"risk-details": {"kind": "inline", "commands": [{"command": "object.update", "target": "risk", "props": {"value": 9}}, {"command": "object.upsert", "object": {"id": "details", "type": "board", "x": 1900, "y": -550, "w": 1600, "h": 900, "props": {"label": "04 / DISCOVERED", "title": "Affected services", "text": "This board was created by a JSON response, not embedded as HTML."}}}, {"command": "object.upsert", "object": {"id": "findings", "type": "table", "x": 80, "y": 290, "w": 1440, "h": 475, "props": {"title": "Prioritized findings", "columns": ["Service", "Severity", "Open"], "rows": [["API gateway", "Critical", 5], ["Identity", "Critical", 3], ["Storage", "Critical", 1]], "buttons": [{"label": "Return to overview", "event": "return"}]}, "parent": "details"}}, {"command": "object.move", "target": "notes", "x": 300, "y": 850}, {"command": "behaviour.upsert", "behaviour": {"id": "return-home", "on": {"event": "widget.action", "target": "findings", "name": "return"}, "actions": [{"command": "camera.overview"}]}}]}, "risk-click": {"kind": "inline", "commands": [{"command": "object.update", "target": "risk", "props": {"value": 9}}, {"command": "object.upsert", "object": {"id": "details", "type": "board", "x": 1900, "y": -550, "w": 1600, "h": 900, "props": {"label": "04 / DISCOVERED", "title": "Affected services", "text": "This board was created by a JSON response, not embedded as HTML."}}}, {"command": "object.upsert", "object": {"id": "findings", "type": "table", "x": 80, "y": 290, "w": 1440, "h": 475, "props": {"title": "Prioritized findings", "columns": ["Service", "Severity", "Open"], "rows": [["API gateway", "Critical", 5], ["Identity", "Critical", 3], ["Storage", "Critical", 1]], "buttons": [{"label": "Return to overview", "event": "return"}]}, "parent": "details"}}, {"command": "object.move", "target": "notes", "x": 300, "y": 850}, {"command": "behaviour.upsert", "behaviour": {"id": "return-home", "on": {"event": "widget.action", "target": "findings", "name": "return"}, "actions": [{"command": "camera.overview"}]}}, {"command": "camera.focus", "target": "details"}]}, "telemetry": {"kind": "inline", "commands": [{"command": "object.update", "target": "trend", "props": {"items": [{"label": "API gateway", "value": 5}, {"label": "Identity", "value": 3}, {"label": "Storage", "value": 1}]}}]}}, "camera": {"initial": "overview"}}</script><script>
+/* Camera interpolation and adaptive background derived from the supplied Spatial Explainer reference. */
+const ease = p => p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+
+function lerpCam(a, b, p, fly) {
+  const e = ease(Math.max(0, Math.min(1, p)));
+  const x = a.x + (b.x - a.x) * e;
+  const y = a.y + (b.y - a.y) * e;
+  // Geometric interpolation for scale looks uniform to the eye
+  let s = Math.exp(Math.log(a.s) + (Math.log(b.s) - Math.log(a.s)) * e);
+  if (fly) {
+    // Gentle zoom-out arc midway through long flights
+    const dip = Math.sin(e * Math.PI);
+    s *= Math.exp(-0.55 * dip);
+  }
+  return { x, y, s };
+}
+
+
+const cv = document.getElementById('bg');
+const ctx = cv.getContext('2d');
+let DPR = 1;
+function resize() {
+  DPR = Math.min(2, devicePixelRatio || 1);
+  cv.width = innerWidth * DPR;
+  cv.height = innerHeight * DPR;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const dust = Array.from({ length: 120 }, () => ({
+  x: Math.random(),
+  y: Math.random(),
+  z: 0.2 + Math.random() * 0.65,
+  a: 0.12 + Math.random() * 0.35,
+  r: 0.8 + Math.random() * 1.6
+}));
+
+let prevCam = null;
+function drawBg(c) {
+  const W = innerWidth, Hh = innerHeight, k = baseScale() * c.s;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, W, Hh);
+
+  // Choose an adaptive grid spacing in world units so grid squares stay readable at any zoom
+  const rawStep = 90 / k;
+  const pow = Math.pow(2, Math.round(Math.log2(rawStep)));
+  const step = Math.max(64, pow);
+  const pxStep = step * k;
+
+  ctx.strokeStyle = 'rgba(40,51,70,.42)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  const ox = ((W / 2 - c.x * k) % pxStep + pxStep) % pxStep;
+  const oy = (((Hh - 36) / 2 - c.y * k) % pxStep + pxStep) % pxStep;
+  for (let x = ox; x < W; x += pxStep) { ctx.moveTo(x, 0); ctx.lineTo(x, Hh); }
+  for (let y = oy; y < Hh; y += pxStep) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  ctx.stroke();
+
+  // Parallax dust with motion streaks during camera flight
+  const vx = prevCam ? (c.x - prevCam.x) * k : 0;
+  const vy = prevCam ? (c.y - prevCam.y) * k : 0;
+  const speedPx = Math.hypot(vx, vy);
+
+  for (const d of dust) {
+    const sx = ((d.x * W - c.x * k * 0.08 * d.z) % W + W) % W;
+    const sy = ((d.y * Hh - c.y * k * 0.08 * d.z) % Hh + Hh) % Hh;
+    ctx.fillStyle = `rgba(236,229,214,${d.a})`;
+    if (speedPx > 3 && !reducedMotion.matches) {
+      ctx.strokeStyle = `rgba(240,180,76,${Math.min(0.45, d.a * 0.9)})`;
+      ctx.lineWidth = d.r;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + vx * 0.35 * d.z, sy + vy * 0.35 * d.z);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(sx, sy, d.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  prevCam = { ...c };
+}
+
+
+'use strict';
+const world = document.getElementById('world'), stage = document.getElementById('stage');
+const $ = id => document.getElementById(id);
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const clone = x => JSON.parse(JSON.stringify(x));
+const own = (o,k) => Object.prototype.hasOwnProperty.call(o,k);
+const obj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+const idOK = v => typeof v === 'string' && /^[a-zA-Z][\w-]{0,63}$/.test(v) && !['constructor','prototype','__proto__'].includes(v);
+const num = (v,lo,hi) => typeof v === 'number' && Number.isFinite(v) && v>=lo && v<=hi;
+const str = (v,n=2000) => typeof v==='string' && v.length<=n;
+const fail = m => {throw Error(m)};
+const check = (v,m) => {if(!v) fail(m)};
+const keys = (o,allowed) => {check(obj(o),'Expected object');for(const k of Object.keys(o))check(allowed.includes(k),`Unexpected field: ${k}`)};
+const optional = (o,k,f) => !own(o,k)||f(o[k]);
+const catalog = new Set(['board','text','metric','list','chart','table','controls']);
+const eventTypes = new Set(['widget.action','camera.enter','camera.leave','scene.ready','data.loaded']);
+const LIMIT=250;
+const MAX_COORD=1000000;
+const MIN_S=.002, MAX_S=16;
+function validProps(p){
+  keys(p,['label','title','text','value','items','rows','columns','buttons']);
+  for(const k of ['label','title','text'])check(optional(p,k,v=>str(v)),`Invalid ${k}`);
+  check(optional(p,'value',v=>str(v,200)||num(v,-1e12,1e12)),'Invalid value');
+  check(optional(p,'items',v=>Array.isArray(v)&&v.length<=100&&v.every(i=>str(i,300)||(obj(i)&&Object.keys(i).every(k=>['label','value'].includes(k))&&str(i.label,100)&&num(i.value,0,1e12)))),'Invalid items');
+  check(optional(p,'columns',v=>Array.isArray(v)&&v.length<=12&&v.every(i=>str(i,100))),'Invalid columns');
+  check(optional(p,'rows',v=>Array.isArray(v)&&v.length<=100&&v.every(r=>Array.isArray(r)&&r.length<=12&&r.every(i=>str(i,300)||num(i,-1e12,1e12)))),'Invalid rows');
+  check(optional(p,'buttons',v=>Array.isArray(v)&&v.length<=10&&v.every(b=>obj(b)&&Object.keys(b).every(k=>['label','event'].includes(k))&&str(b.label,100)&&idOK(b.event))),'Invalid buttons');
+}
+function validNode(n){
+  keys(n,['id','type','parent','x','y','w','h','props','variants','hidden']);
+  check(idOK(n.id)&&catalog.has(n.type),'Invalid object id/type');
+  check(optional(n,'parent',v=>v===null||idOK(v)),'Invalid parent');
+  check(num(n.x,-MAX_COORD,MAX_COORD)&&num(n.y,-MAX_COORD,MAX_COORD)&&num(n.w,100,20000)&&num(n.h,80,20000),'Invalid object bounds');
+  check(optional(n,'hidden',v=>typeof v==='boolean'),'Invalid hidden');
+  validProps(n.props);
+  check(optional(n,'variants',v=>Array.isArray(v)&&v.length<=8),'Invalid variants');
+  let last=0;
+  for(const v of n.variants||[]){keys(v,['minZoom','type','props']);check(num(v.minZoom,MIN_S,MAX_S)&&v.minZoom>last,'Variants must be sorted by ascending minZoom');check(catalog.has(v.type)&&v.type!=='board'&&n.type!=='board','Invalid semantic variant type');validProps(v.props);last=v.minZoom;}
+}
+function validBehaviour(b){
+  keys(b,['id','on','once','actions']);check(idOK(b.id),'Invalid behaviour id');
+  keys(b.on,['event','target','name','minZoom']);check(eventTypes.has(b.on.event),'Invalid event');
+  check(optional(b.on,'target',idOK)&&optional(b.on,'name',idOK)&&optional(b.on,'minZoom',v=>num(v,MIN_S,MAX_S)),'Invalid event filter');
+  if(b.on.event.startsWith('camera.'))check(idOK(b.on.target),'Camera rule needs target');
+  check(optional(b,'once',v=>typeof v==='boolean'),'Invalid once');check(Array.isArray(b.actions)&&b.actions.length>0&&b.actions.length<=20,'Invalid actions');
+  b.actions.forEach(validCommand);
+}
+function validSource(s){
+  check(obj(s),'Invalid source');
+  if(s.kind==='inline'){keys(s,['kind','commands']);check(Array.isArray(s.commands)&&s.commands.length<=100,'Invalid inline response');s.commands.forEach(validResponseCommand);}
+  else if(s.kind==='http'){keys(s,['kind','url']);check(str(s.url,1000),'Invalid URL');const u=new URL(s.url,location.href);check(['http:','https:'].includes(u.protocol)&&u.origin===location.origin&&!u.username&&!u.password,'HTTP sources must be same-origin');}
+  else fail('Unknown source kind');
+}
+function validCommand(c){
+  check(obj(c),'Invalid command');
+  switch(c.command){
+    case 'object.upsert':keys(c,['command','object']);validNode(c.object);break;
+    case 'object.update':keys(c,['command','target','props']);check(idOK(c.target),'Invalid target');validProps(c.props);break;
+    case 'object.move':keys(c,['command','target','x','y','parent']);check(idOK(c.target)&&num(c.x,-MAX_COORD,MAX_COORD)&&num(c.y,-MAX_COORD,MAX_COORD)&&optional(c,'parent',v=>v===null||idOK(v)),'Invalid move');break;
+    case 'object.resize':keys(c,['command','target','w','h']);check(idOK(c.target)&&num(c.w,100,20000)&&num(c.h,80,20000),'Invalid resize');break;
+    case 'object.delete':keys(c,['command','target']);check(idOK(c.target),'Invalid target');break;
+    case 'object.visibility':keys(c,['command','target','hidden']);check(idOK(c.target)&&typeof c.hidden==='boolean','Invalid visibility');break;
+    case 'behaviour.upsert':keys(c,['command','behaviour']);validBehaviour(c.behaviour);break;
+    case 'behaviour.delete':keys(c,['command','target']);check(idOK(c.target),'Invalid behaviour target');break;
+    case 'camera.focus':keys(c,['command','target','durationMs']);check(idOK(c.target)&&optional(c,'durationMs',v=>num(v,0,5000)),'Invalid focus');break;
+    case 'camera.overview':keys(c,['command','durationMs']);check(optional(c,'durationMs',v=>num(v,0,5000)),'Invalid overview');break;
+    case 'camera.set':keys(c,['command','x','y','s','durationMs']);check(num(c.x,-MAX_COORD,MAX_COORD)&&num(c.y,-MAX_COORD,MAX_COORD)&&num(c.s,MIN_S,MAX_S)&&optional(c,'durationMs',v=>num(v,0,5000)),'Invalid camera');break;
+    case 'data.fetch':keys(c,['command','source']);check(idOK(c.source),'Invalid source id');break;
+    default:fail('Unknown command: '+c.command);
+  }
+}
+function validResponseCommand(c){validCommand(c);check(c.command!=='data.fetch','Response cannot directly initiate a fetch');}
+function validate(s){
+  keys(s,['version','title','objects','behaviours','sources','camera']);check(s.version===1&&str(s.title,120),'Invalid scene version/title');
+  check(Array.isArray(s.objects)&&s.objects.length<=LIMIT,'Too many objects');
+  const nodes=new Map();for(const n of s.objects){validNode(n);check(!nodes.has(n.id),'Duplicate object '+n.id);nodes.set(n.id,n)}
+  for(const n of nodes.values()){let cur=n, seen=new Set();while(cur.parent){check(!seen.has(cur.id),'Parent cycle');seen.add(cur.id);cur=nodes.get(cur.parent);check(cur&&cur.type==='board','Parent must be existing board');check(seen.size<=8,'Board nesting limit');}}
+  check(Array.isArray(s.behaviours)&&s.behaviours.length<=100,'Invalid behaviours');const ids=new Set();for(const b of s.behaviours){validBehaviour(b);check(!ids.has(b.id),'Duplicate behaviour');ids.add(b.id)}
+  check(obj(s.sources)&&Object.keys(s.sources).length<=50,'Invalid sources');for(const [k,v] of Object.entries(s.sources)){check(idOK(k),'Invalid source id');validSource(v);}
+  for(const b of s.behaviours)for(const a of b.actions)if(a.command==='data.fetch')check(own(s.sources,a.source),'Unknown source: '+a.source);
+  keys(s.camera,['initial']);check(s.camera.initial==='overview'||nodes.has(s.camera.initial),'Invalid initial camera');
+  return s;
+}
+let scene, nodes=new Map(), dom=new Map(), fired=new Set(), running=new Set(), inside=new Map(), requests=new Map(), generation=0, revision=0;
+let lastCam={x:0,y:0,s:1}, flight=null, dirty=true, settleAt=0, cameraDirty=true, mapMode=true, follow=true, humanEpoch=0, dragging=null;
+const bus=new EventTarget();
+function status(msg){$('status').textContent=msg;}
+function emit(type,detail={}){
+  const event={type,...detail};bus.dispatchEvent(new CustomEvent(type,{detail:clone(event)}));
+  for(const b of scene?.behaviours||[]){const o=b.on;if(o.event!==type||o.target&&o.target!==event.target||o.name&&o.name!==event.name)continue;
+    if(o.minZoom!==undefined&&lastCam.s<o.minZoom&&!type.startsWith('camera.'))continue;
+    if(type.startsWith('camera.')&&event.rule!==b.id)continue;
+    if((b.once&&fired.has(b.id))||running.has(b.id))continue;
+    const gen=generation, epoch=humanEpoch;running.add(b.id);
+    Promise.resolve().then(async()=>{try{for(const a of b.actions){if(gen!==generation)return;await dispatch(a,{epoch});}if(gen===generation&&b.once)fired.add(b.id);}catch(e){if(gen===generation)status('Action rejected: '+e.message);}finally{if(gen===generation)running.delete(b.id);}});
+  }
+}
+function abs(n){let x=n.x,y=n.y,hidden=!!n.hidden,p=n.parent;while(p){const b=nodes.get(p);x+=b.x;y+=b.y;hidden=hidden||!!b.hidden;p=b.parent;}return {...n,x,y,hidden};}
+function baseScale(){return Math.max(.01,Math.min(innerWidth/1600,(innerHeight-68)/900)*.9)}
+function screenToWorld(px,py,c){const k=baseScale()*c.s;return {x:c.x+(px-innerWidth/2)/k,y:c.y+(py-(innerHeight-36)/2)/k};}
+function fit(bounds){const w=Math.max(1,bounds.w),h=Math.max(1,bounds.h);return{x:bounds.x+w/2,y:bounds.y+h/2,s:Math.max(MIN_S,Math.min(MAX_S,Math.min((innerWidth-80)/w,(innerHeight-130)/h)/baseScale()))};}
+function overview(){const a=[...nodes.values()].map(abs).filter(n=>!n.hidden);if(!a.length)return{x:0,y:0,s:1};const x=Math.min(...a.map(n=>n.x)),y=Math.min(...a.map(n=>n.y));return fit({x,y,w:Math.max(...a.map(n=>n.x+n.w))-x,h:Math.max(...a.map(n=>n.y+n.h))-y});}
+function target(c){if(c.command==='camera.overview')return overview();if(c.command==='camera.set')return{x:c.x,y:c.y,s:c.s};const n=nodes.get(c.target);check(n&&!abs(n).hidden,'Camera target unavailable');return fit(abs(n));}
+function flyTo(to,durationMs,owner="automation"){const from={...lastCam},dist=Math.hypot(to.x-from.x,to.y-from.y),scaleJump=Math.abs(Math.log(to.s/from.s));const duration=reducedMotion.matches?0:durationMs??1000*Math.min(2.6,Math.max(1.25,1.1+scaleJump*.75+dist/8500));flight=duration?{from,to,t:performance.now(),duration,owner,fly:dist>1800||scaleJump>.3}:null;if(!flight){lastCam=to;settleAt=performance.now();}cameraDirty=true;dirty=true;}
+function syncFollow(){ $('follow').textContent='Follow: '+(follow?'on':'off');$('follow').setAttribute('aria-pressed',String(follow)); }
+function manual(){humanEpoch++;follow=false;syncFollow();flight=null;mapMode=false;cameraDirty=true;dirty=true;}
+function userNav(c){humanEpoch++;mapMode=c.command==='camera.overview';flyTo(target(c),c.durationMs,"human");}
+function automated(c,epoch){if(!follow||dragging||flight?.owner==="human"||epoch!==humanEpoch){status('Camera request skipped: human control');emit('camera.interrupted',{reason:'human-control'});return;}mapMode=c.command==='camera.overview';flyTo(target(c),c.durationMs);}
+function element(tag,cls,text){const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=String(text);return el;}
+function display(n){let v=n;for(const q of n.variants||[])if(lastCam.s>=q.minZoom)v={...n,type:q.type,props:{...n.props,...q.props}};return v;}
+function makeContent(n){const p=n.props,c=element('div','node-content');if(p.label)c.append(element('div','node-label',p.label));if(p.title)c.append(element('h2','node-title',p.title));if(p.text)c.append(element('p','node-text',p.text));
+  if(n.type==='metric'&&p.value!==undefined)c.append(element('div','metric',p.value));
+  if(n.type==='list'){const list=element('ul','node-list');for(const item of p.items||[])list.append(element('li','',typeof item==='string'?item:`${item.label}: ${item.value}`));c.append(list);}
+  if(n.type==='chart'){const items=(p.items||[]).filter(obj),max=Math.max(1,...items.map(i=>i.value));const bars=element('div','chart');for(const i of items){const r=element('div','bar-row');r.append(element('span','bar-label',i.label));const track=element('div','bar-track'),bar=element('div','bar-value');bar.style.width=(i.value/max*100)+'%';track.append(bar);r.append(track,element('span','bar-number',i.value));bars.append(r);}c.append(bars);}
+  if(n.type==='table'){const wrap=element('div','table-wrap'),t=element('table');const head=element('thead'),hr=element('tr');for(const col of p.columns||[])hr.append(element('th','',col));head.append(hr);t.append(head);const body=element('tbody');for(const row of p.rows||[]){const tr=element('tr');for(const cell of row)tr.append(element('td','',cell));body.append(tr);}t.append(body);wrap.append(t);c.append(wrap);}
+  if(p.buttons?.length){const actions=element('div','node-actions');for(const b of p.buttons){const btn=element('button','btn',b.label);btn.type='button';btn.addEventListener('click',e=>{e.stopPropagation();emit('widget.action',{target:n.id,name:b.event});});actions.append(btn);}c.append(actions);}
+  return c;
+}
+function render(){
+  for(const [id,entry] of dom)if(!nodes.has(id)){entry.el.remove();dom.delete(id);}
+  // Flatten objects into the original world container; parent coordinates are logical, not CSS nested transforms.
+  const depths=n=>{let d=0;while(n.parent){d++;n=nodes.get(n.parent);}return d};
+  const sorted=[...nodes.values()].sort((a,b)=>depths(a)-depths(b));
+  for(const n of sorted){const a=abs(n),v=display(n);let entry=dom.get(n.id);if(!entry){const el=element('section','node');el.dataset.id=n.id;el.tabIndex=0;el.addEventListener('click',e=>{if(e.target.closest('button, input, select, textarea, a'))return;if(mapMode){e.stopPropagation();userNav({command:'camera.focus',target:n.id});}else emit('widget.action',{target:n.id,name:'select'});});el.addEventListener('dblclick',e=>{if(!e.target.closest('button,input,select,textarea,a')){e.stopPropagation();userNav({command:'camera.focus',target:n.id});}});el.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target===el){e.stopPropagation();userNav({command:'camera.focus',target:n.id});}});world.append(el);entry={el,key:null};dom.set(n.id,entry);if(!reducedMotion.matches)el.animate([{opacity:0},{opacity:1}],{duration:500,easing:'ease-out'});}
+    const {el}=entry;el.className='node '+(n.type==='board'?'board':'card')+(mapMode?' clickable':'');Object.assign(el.style,{left:a.x+'px',top:a.y+'px',width:n.w+'px',height:n.h+'px',zIndex:String(depths(n)*2+(n.type==='board'?0:1))});el.hidden=a.hidden;el.setAttribute('aria-label',v.props.title||n.id);
+    const key=JSON.stringify([v.type,v.props,n.type]);if(key!==entry.key){const content=makeContent(v);if(n.type==='board'){for(const k of ['tl','tr','bl','br'])content.append(element('div','sheet-mark '+k));}el.replaceChildren(content);entry.key=key;}
+  }
+  $('count').textContent=nodes.size+' objects';$('title').textContent=scene.title;dirty=false;
+}
+function evaluateCamera(){
+  if(!scene)return;const k=baseScale()*lastCam.s,hw=innerWidth/2/k,hh=(innerHeight-36)/2/k;
+  const active=new Set();for(const b of scene.behaviours){if(!b.on.event.startsWith('camera.'))continue;active.add(b.id);const n=nodes.get(b.on.target),a=n?abs(n):null;const yes=!!a&&!a.hidden&&lastCam.s>=(b.on.minZoom??MIN_S)&&Math.abs(a.x+a.w/2-lastCam.x)<=hw&&Math.abs(a.y+a.h/2-lastCam.y)<=hh;const old=inside.get(b.id)||false;inside.set(b.id,yes);if(yes!==old)emit(yes?'camera.enter':'camera.leave',{target:b.on.target,rule:b.id,zoom:lastCam.s});}
+  for(const id of inside.keys())if(!active.has(id))inside.delete(id);
+}
+function getObj(s,id){const n=s.objects.find(n=>n.id===id);check(n,'Unknown object '+id);return n;}
+function applyMutation(s,c){switch(c.command){
+  case 'object.upsert':{const i=s.objects.findIndex(n=>n.id===c.object.id);if(i<0)s.objects.push(clone(c.object));else s.objects[i]=clone(c.object);break;}
+  case 'object.update':{const n=getObj(s,c.target);n.props={...n.props,...clone(c.props)};break;}
+  case 'object.move':{const n=getObj(s,c.target);n.x=c.x;n.y=c.y;if(own(c,'parent'))n.parent=c.parent;break;}
+  case 'object.resize':{const n=getObj(s,c.target);n.w=c.w;n.h=c.h;break;}
+  case 'object.visibility':getObj(s,c.target).hidden=c.hidden;break;
+  case 'object.delete':{getObj(s,c.target);const removed=new Set([c.target]);let changed;do{changed=false;for(const n of s.objects)if(removed.has(n.parent)&&!removed.has(n.id)){removed.add(n.id);changed=true;}}while(changed);s.objects=s.objects.filter(n=>!removed.has(n.id));if(removed.has(s.camera.initial))s.camera.initial='overview';break;}
+  case 'behaviour.upsert':{const i=s.behaviours.findIndex(b=>b.id===c.behaviour.id);if(i<0)s.behaviours.push(clone(c.behaviour));else s.behaviours[i]=clone(c.behaviour);break;}
+  case 'behaviour.delete':s.behaviours=s.behaviours.filter(b=>b.id!==c.target);break;
+  default:fail('Not a mutation');
+}}
+function applyBatch(commands,{epoch=humanEpoch}={}){
+  check(Array.isArray(commands)&&commands.length<=100,'Invalid command batch');commands.forEach(validResponseCommand);const next=clone(scene);const cams=[];for(const c of commands){if(c.command.startsWith('camera.'))cams.push(c);else applyMutation(next,c);}
+  validate(next);for(const c of cams)if(c.command==='camera.focus'){let n=getObj(next,c.target);while(n){check(!n.hidden,'Camera target hidden');n=n.parent?getObj(next,n.parent):null;}}
+  const changed=commands.some(c=>!c.command.startsWith('camera.'));if(changed){for(const b of next.behaviours){const old=scene.behaviours.find(x=>x.id===b.id);if(JSON.stringify(b)!==JSON.stringify(old)){fired.delete(b.id);inside.delete(b.id);}}
+    scene=next;nodes=new Map(scene.objects.map(n=>[n.id,n]));revision++;dirty=true;cameraDirty=true;settleAt=performance.now()+100;emit('scene.changed',{revision});}
+  for(const c of cams)automated(c,epoch);
+  return {revision};
+}
+async function dispatch(c,{epoch=humanEpoch}={}){validCommand(c);if(c.command==='data.fetch')return fetchSource(c.source,epoch);return applyBatch([c],{epoch});}
+async function fetchSource(name,epoch){
+  check(own(scene.sources,name),'Unknown source '+name);if(requests.has(name))return requests.get(name).promise;const gen=generation,source=clone(scene.sources[name]),controller=new AbortController();
+  const promise=Promise.resolve().then(async()=>{try{status('Loading '+name+'…');let commands;
+    if(source.kind==='inline')commands=clone(source.commands);else{const timeout=setTimeout(()=>controller.abort(),15000);try{const response=await fetch(new URL(source.url,location.href),{signal:controller.signal,credentials:'same-origin',redirect:'error',cache:'no-store'});check(response.ok,'HTTP '+response.status);const text=await response.text();check(text.length<=1000000,'Response too large');commands=JSON.parse(text);}finally{clearTimeout(timeout);}}
+    if(gen!==generation)return;applyBatch(commands,{epoch});status('Loaded '+name);emit('data.loaded',{name});return {revision};
+  }catch(e){if(gen===generation)status('Fetch failed: '+e.message);throw e;}finally{if(gen===generation)requests.delete(name);}});requests.set(name,{promise,controller});return promise;
+}
+function loadScene(input){const next=validate(clone(input));generation++;for(const r of requests.values())r.controller.abort();requests.clear();fired.clear();running.clear();inside.clear();scene=next;nodes=new Map(scene.objects.map(n=>[n.id,n]));revision=0;humanEpoch++;follow=true;syncFollow();flight=null;mapMode=scene.camera.initial==='overview';lastCam=mapMode?overview():target({command:'camera.focus',target:scene.camera.initial});dirty=true;cameraDirty=true;settleAt=performance.now()+150;status('Scene loaded');emit('scene.ready');}
+window.fieldwork=Object.freeze({getState:()=>({scene:clone(scene),camera:{...lastCam},revision,follow}),loadScene,dispatch:c=>dispatch(clone(c)),batch:c=>applyBatch(clone(c)),events:bus});
+$('map').onclick=()=>userNav({command:'camera.overview'});$('follow').onclick=()=>{follow=!follow;humanEpoch++;if(!follow&&flight?.owner!=="human"){flight=null;settleAt=performance.now()+100;}syncFollow();status(follow?'Automatic navigation enabled':'Human controls camera');};
+$('import').onclick=()=>$('file').click();$('file').onchange=async e=>{try{const f=e.target.files[0];if(f){check(f.size<=1000000,'File too large');loadScene(JSON.parse(await f.text()));}}catch(err){status('Import rejected: '+err.message);}e.target.value='';};
+$('reset').onclick=()=>loadScene(JSON.parse($('demo').textContent));
+$('load-url').onclick=async()=>{const url=$('scene-url').value.trim();try{const u=new URL(url,location.href);check(['http:','https:'].includes(u.protocol)&&u.origin===location.origin,'Scene URL must be same-origin HTTP');const gen=generation;const r=await fetch(u,{redirect:'error',cache:'no-store',credentials:'same-origin'});check(r.ok,'HTTP '+r.status);const t=await r.text();check(t.length<=1000000,'Scene too large');if(gen===generation)loadScene(JSON.parse(t));}catch(e){status('Load rejected: '+e.message);}};
+stage.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button,input,select,textarea,a'))return;dragging={id:e.pointerId,x:e.clientX,y:e.clientY,c:{...lastCam},moved:false};});
+window.addEventListener('pointermove',e=>{if(!dragging||dragging.id!==e.pointerId)return;const dx=e.clientX-dragging.x,dy=e.clientY-dragging.y;if(!dragging.moved&&Math.hypot(dx,dy)<5)return;if(!dragging.moved){manual();dragging.moved=true;stage.classList.add('drag');stage.setPointerCapture(e.pointerId);}const k=baseScale()*dragging.c.s;lastCam={...dragging.c,x:dragging.c.x-dx/k,y:dragging.c.y-dy/k};cameraDirty=true;settleAt=Infinity;});
+function endDrag(){if(dragging?.moved){settleAt=performance.now()+150;stage.classList.remove('drag');}dragging=null;}
+window.addEventListener('pointerup',endDrag);window.addEventListener('pointercancel',endDrag);stage.addEventListener('lostpointercapture',endDrag);
+stage.addEventListener('wheel',e=>{if(e.target.closest('.table-wrap')&&!e.ctrlKey)return;e.preventDefault();manual();const before=screenToWorld(e.clientX,e.clientY,lastCam),factor=Math.exp(-e.deltaY*(e.deltaMode===1?16:1)*.0014);lastCam.s=Math.max(MIN_S,Math.min(MAX_S,lastCam.s*factor));const after=screenToWorld(e.clientX,e.clientY,lastCam);lastCam.x+=before.x-after.x;lastCam.y+=before.y-after.y;settleAt=performance.now()+180;},{passive:false});
+window.addEventListener('keydown',e=>{if(e.target.closest('input,button,textarea,select'))return;if(e.key.toLowerCase()==='m')userNav({command:'camera.overview'});if(e.key==='Escape'){manual();settleAt=performance.now()+100;}if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-','='].includes(e.key)){e.preventDefault();manual();const step=100/(baseScale()*lastCam.s);if(e.key==='ArrowLeft')lastCam.x-=step;if(e.key==='ArrowRight')lastCam.x+=step;if(e.key==='ArrowUp')lastCam.y-=step;if(e.key==='ArrowDown')lastCam.y+=step;if(e.key==='+'||e.key==='=')lastCam.s=Math.min(MAX_S,lastCam.s*1.3);if(e.key==='-')lastCam.s=Math.max(MIN_S,lastCam.s/1.3);settleAt=performance.now()+150;}});
+window.addEventListener('resize',()=>{cameraDirty=true;settleAt=performance.now()+150;});
+function frame(pn){
+  if(flight){const p=Math.min(1,(pn-flight.t)/flight.duration);lastCam=lerpCam(flight.from,flight.to,p,flight.fly);cameraDirty=true;if(p>=1){lastCam=flight.to;flight=null;settleAt=pn+100;emit('camera.arrived',{camera:{...lastCam}});}}
+  if(cameraDirty){const k=baseScale()*lastCam.s;world.style.transform=`translate(${innerWidth/2-lastCam.x*k}px, ${(innerHeight-36)/2-lastCam.y*k}px) scale(${k})`;drawBg(lastCam);$('camReadout').textContent=`x:${Math.round(lastCam.x)} y:${Math.round(lastCam.y)} s:${lastCam.s.toFixed(3)}`;for(const n of nodes.values()){const v=display(n);if(dom.get(n.id)?.key!==JSON.stringify([v.type,v.props,n.type])){dirty=true;break;}}cameraDirty=false;}
+  if(dirty&&scene)render();if(!flight&&!dragging&&settleAt&&pn>=settleAt){settleAt=0;evaluateCamera();}requestAnimationFrame(frame);
+}
+loadScene(JSON.parse($('demo').textContent));requestAnimationFrame(frame);
+
+</script></body></html>
