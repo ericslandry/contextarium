@@ -3,8 +3,8 @@ const obj=(properties={},required=[])=>({type:"object",properties,required,addit
 const commandSchema={type:"object",required:["command"],properties:{command:{enum:["object.upsert","object.update","object.move","object.resize","object.delete","object.visibility","behaviour.upsert","behaviour.delete","camera.focus","camera.overview","camera.set"]}},additionalProperties:true};
 const empty=obj();
 const stateSchema=obj();
-const batchSchema=obj({commands:{type:"array",minItems:1,maxItems:100,items:commandSchema},expectedRevision:{type:"integer",minimum:0},expectedEpoch:{type:"integer",minimum:0}},["commands","expectedRevision","expectedEpoch"]);
-const sceneSchema=obj({scene:{type:"object",required:["version","title","objects","behaviours","sources","camera"],properties:{version:{const:1},title:{type:"string"},objects:{type:"array",maxItems:300},behaviours:{type:"array"},sources:{type:"object"},camera:{type:"object"}},additionalProperties:false}},["scene"]);
+const batchSchema=obj({commands:{type:"array",minItems:1,maxItems:100,items:commandSchema},expectedRevision:{type:"integer",minimum:0},expectedEpoch:{type:"string",minLength:1,maxLength:128}},["commands","expectedRevision","expectedEpoch"]);
+const sceneSchema=obj({scene:{type:"object",required:["version","title","objects","behaviours","sources","camera"],properties:{version:{const:1},title:{type:"string"},objects:{type:"array",maxItems:250},behaviours:{type:"array"},sources:{type:"object"},camera:{type:"object"}},additionalProperties:false}},["scene"]);
 export function makeActions(getInstance){
   const call=(ctx,operation)=>getInstance(ctx.instanceId).broker.call(operation,ctx.input||{});
   return [
