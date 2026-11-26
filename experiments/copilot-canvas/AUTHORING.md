@@ -8,7 +8,7 @@ Example apply_commands input (replace revision/epoch with actual values):
 ```json
 {
  "expectedRevision": 0,
- "expectedEpoch": 0,
+ "expectedEpoch": "replace-with-live-bridgeEpoch",
  "commands": [
    {"command":"object.upsert","object":{"id":"agent-summary","type":"board","x":1900,"y":-550,"w":1600,"h":900,"props":{"label":"AGENT / ANALYSIS","title":"Investigation summary","text":"Overview of the available evidence."}}},
    {"command":"object.upsert","object":{"id":"agent-details","type":"text","parent":"agent-summary","x":80,"y":290,"w":1440,"h":475,"props":{"title":"Next steps","text":"Review the supporting findings.","buttons":[{"label":"Ask Copilot","event":"ask-copilot"}]}}}
@@ -16,6 +16,6 @@ Example apply_commands input (replace revision/epoch with actual values):
 }
 ```
 
-The browser records camera events but deliberately does not automatically invoke reasoning on zoom: programmatic motion can cause the same events as human motion. Use the explicit Ask Copilot button or declare a button event named ask-copilot; it submits a bounded prompt. A later opt-in policy may use human-attributed zoom events with debouncing and loop prevention. There is no model API key, agent framework dependency or generic external tool execution in the browser.
+The browser records camera events. The default is an explicit Ask Copilot button or a declared button event named ask-copilot. An opt-in experimental checkbox also submits a bounded prompt when a declared camera.enter event follows a recent trusted wheel or zoom-key gesture while Follow is off. The gesture is consumed once, mutation/reset clears it, and the server rate-limits requests. This is a conservative heuristic, not reliable gesture provenance; validate it in Copilot before relying on it. There is no model API key, agent framework dependency or generic external tool execution in the browser.
 
 Try asking Copilot to build a three-board fictional service health investigation with an overview, findings, and remediation priorities. Use synthetic data only. Ask it to add new findings proactively while you pan; it should use apply_commands without camera.focus unless asked. Verify the original page remains usable in standalone mode.
