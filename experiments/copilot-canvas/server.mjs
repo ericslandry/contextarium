@@ -54,9 +54,9 @@ export async function startCanvas({onPrompt=async()=>{throw Error("No Copilot se
         broker.record(data.client,data.event);return json(res,200,{ok:true});
       }
       if(!allowPrompts)return json(res,403,{error:"prompts disabled"});
-      // Only the explicit Ask Copilot affordance calls this route; telemetry is never a prompt.
+      // Explicit Ask Copilot or opt-in manual-zoom affordance; passive telemetry never prompts.
       if(promptBusy||Date.now()-lastPrompt<2500)return json(res,429,{error:"prompt already pending or rate limited"});
-      if(typeof data.target!=="string"||!/^[a-z0-9_.-]{1,100}$/i.test(data.target))return json(res,400,{error:"invalid target"});
+      if(typeof data.target!=="string"||!/^[a-z][a-z0-9_-]{0,63}$/i.test(data.target))return json(res,400,{error:"invalid target"});
       promptBusy=true;lastPrompt=Date.now();
       try{const result=await onPrompt(data.target);return json(res,200,{ok:true,result});}
       finally{promptBusy=false;}
