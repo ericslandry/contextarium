@@ -1,5 +1,6 @@
 import {readFile} from "node:fs/promises";
 import {layoutContract} from "./layout-contract.mjs";
+import {readAuthoringAssets} from "./assets.mjs";
 const obj=(properties={},required=[])=>({type:"object",properties,required,additionalProperties:false});
 const commandSchema={type:"object",required:["command"],properties:{command:{enum:["object.upsert","object.update","object.move","object.resize","object.delete","object.visibility","behaviour.upsert","behaviour.delete","camera.focus","camera.overview","camera.set"]}},additionalProperties:true};
 const empty=obj();
@@ -31,6 +32,6 @@ export function makeActions(getInstance){
     {name:"apply_commands",description:"Apply validated declarative Contextarium batch. Pass expectedRevision and expectedEpoch from fresh inspect_workspace. Camera may be vetoed by human. Do not use arbitrary HTML or JS.",inputSchema:batchSchema,handler:ctx=>call(ctx,"batch")},
     {name:"load_scene",description:"Intentionally replace entire workspace; only for initialization or explicitly requested reset. Use Contextarium v1 JSON.",inputSchema:sceneSchema,handler:ctx=>call(ctx,"load")},
     {name:"recent_events",description:"Read recent UI and camera events; no automatic model invocation from passive telemetry.",inputSchema:empty,handler:ctx=>getInstance(ctx.instanceId).broker.events()},
-    {name:"authoring_guide",description:"Read Contextarium command contract, component sizing, design guidance, and examples before creating a workspace.",inputSchema:empty,handler:async()=>({layoutContract,guide:await readFile(new URL("AUTHORING.md",import.meta.url),"utf8"),runtimeContract:await readFile(new URL("assets/README.md",import.meta.url),"utf8"),design:await readFile(new URL("assets/DESIGN.md",import.meta.url),"utf8")})}
+    {name:"authoring_guide",description:"Read Contextarium command contract, component sizing, design guidance, and examples before creating a workspace.",inputSchema:empty,handler:async()=>({layoutContract,guide:await readFile(new URL("AUTHORING.md",import.meta.url),"utf8"),...await readAuthoringAssets()})}
   ];
 }
