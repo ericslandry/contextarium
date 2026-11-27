@@ -2,6 +2,7 @@ import {createServer} from "node:http";
 import {randomBytes} from "node:crypto";
 import {readFile} from "node:fs/promises";
 import {createBroker} from "./broker.mjs";
+import {withComponentFitting} from "./layout-contract.mjs";
 
 const here=new URL("./",import.meta.url);
 const assetNames=["index.html","scene.json","scene-http.json","risk-details.json","risk-click.json"];
@@ -14,11 +15,14 @@ async function body(req){
 }
 export async function startCanvas({onPrompt=async()=>{throw Error("No Copilot session; use standalone demo");},allowPrompts=true,assetRoot=new URL("./assets/",here),timeoutMs=12000}={}){
   const assets=Object.fromEntries(await Promise.all(assetNames.map(async name=>[name,await readFile(new URL(name,assetRoot),"utf8")])));
-  const bridge=await readFile(new URL("browser.mjs",here),"utf8");
+  const modules=Object.fromEntries(await Promise.all(
+    ["browser.mjs","layout-browser.mjs","layout-contract.mjs"].map(async name=>[name,await readFile(new URL(name,here),"utf8")])
+  ));
   // Only alter the served experimental copy. Canonical Contextarium HTML stays unchanged.
   if(!assets["index.html"].includes("</body>"))throw Error("unsupported runtime HTML");
-  const html=assets["index.html"].replace("</body>",'<script type="module" src="./browser.mjs"></script></body>')
-    .replace("script-src 'unsafe-inline'","script-src 'self' 'unsafe-inline'");
+  const preview=withComponentFitting(assets["index.html"]);
+  const html=preview.replace("</body>",'<script type="module" src="./browser.mjs"></script></body>')
+    .replace("script-src 'unsafe-inline'","script-src 'self' 'unsafe-inline'; frame-src 'self'");
   const token=randomBytes(24).toString("hex"), broker=createBroker({timeoutMs});
   let stream=null, origin="", lastPrompt=0, promptBusy=false, closed=false;
   const server=createServer(async(req,res)=>{
@@ -39,9 +43,10 @@ export async function startCanvas({onPrompt=async()=>{throw Error("No Copilot se
           const keep=setInterval(()=>res.write(": keepalive\n\n"),15000);
           res.on("close",()=>{clearInterval(keep);release();if(stream===res)stream=null;});return;
         }
-        const content=path===""||path==="index.html"?html:path==="browser.mjs"?bridge:Object.hasOwn(assets,path)?assets[path]:null;
+        const content=path===""||path==="index.html"?html:path==="layout-preview"?preview:
+          Object.hasOwn(modules,path)?modules[path]:Object.hasOwn(assets,path)?assets[path]:null;
         if(content===null)return json(res,404,{error:"unknown asset"});
-        res.writeHead(200,{"Content-Type":path==="browser.mjs"?"text/javascript; charset=utf-8":path.endsWith(".json")?"application/json":"text/html; charset=utf-8","Cache-Control":"no-store","Referrer-Policy":"no-referrer","X-Content-Type-Options":"nosniff"});return res.end(content);
+        res.writeHead(200,{"Content-Type":Object.hasOwn(modules,path)?"text/javascript; charset=utf-8":path.endsWith(".json")?"application/json":"text/html; charset=utf-8","Cache-Control":"no-store","Referrer-Policy":"no-referrer","X-Content-Type-Options":"nosniff"});return res.end(content);
       }
       if(req.method!=="POST"||!["ack","event","prompt"].includes(path))return json(res,405,{error:"unsupported method"});
       // Require the exact same origin, including port. No CORS and no external bind.

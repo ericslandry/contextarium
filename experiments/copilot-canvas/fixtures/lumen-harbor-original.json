@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "title": "Lumen Harbor / synthetic service-health investigation",
+  "objects": [
+    {
+      "id": "zoom-target",
+      "type": "board",
+      "x": 0,
+      "y": 0,
+      "w": 900,
+      "h": 600,
+      "props": {
+        "label": "LUMEN HARBOR / OVERVIEW",
+        "title": "Synthetic service health",
+        "text": "Fictional harbor platform status. Every metric and event in this scene is synthetic."
+      }
+    },
+    {
+      "id": "api-latency",
+      "type": "metric",
+      "x": 40,
+      "y": 120,
+      "w": 240,
+      "h": 130,
+      "parent": "zoom-target",
+      "props": {
+        "label": "API / SYNTHETIC",
+        "title": "P95 latency",
+        "value": "184 ms"
+      }
+    },
+    {
+      "id": "edge-availability",
+      "type": "metric",
+      "x": 330,
+      "y": 120,
+      "w": 240,
+      "h": 130,
+      "parent": "zoom-target",
+      "props": {
+        "label": "EDGE / SYNTHETIC",
+        "title": "Availability",
+        "value": "99.2%"
+      }
+    },
+    {
+      "id": "queue-depth",
+      "type": "metric",
+      "x": 620,
+      "y": 120,
+      "w": 240,
+      "h": 130,
+      "parent": "zoom-target",
+      "props": {
+        "label": "QUEUE / SYNTHETIC",
+        "title": "Pending jobs",
+        "value": "18"
+      }
+    },
+    {
+      "id": "test-note",
+      "type": "text",
+      "x": 40,
+      "y": 400,
+      "w": 820,
+      "h": 120,
+      "parent": "zoom-target",
+      "props": {
+        "label": "ZOOM TEST",
+        "title": "Threshold note",
+        "text": "Waiting for the synthetic zoom threshold (0.9)."
+      }
+    },
+    {
+      "id": "findings-board",
+      "type": "board",
+      "x": 1800,
+      "y": 0,
+      "w": 1200,
+      "h": 900,
+      "props": {
+        "label": "LUMEN HARBOR / FINDINGS",
+        "title": "Synthetic findings",
+        "text": "Fictional investigation snapshot; these are not real incidents."
+      }
+    },
+    {
+      "id": "findings-list",
+      "type": "list",
+      "x": 70,
+      "y": 150,
+      "w": 1060,
+      "h": 600,
+      "parent": "findings-board",
+      "props": {
+        "label": "OBSERVED SIGNALS / SYNTHETIC",
+        "items": [
+          "P95 API latency: 184 ms, above the fictional 150 ms objective.",
+          "Edge availability: 99.2%, below the fictional 99.5% objective.",
+          "Queue depth: 18 jobs; synthetic sample shows no sustained growth."
+        ]
+      }
+    },
+    {
+      "id": "remediation-board",
+      "type": "board",
+      "x": 3600,
+      "y": 0,
+      "w": 1200,
+      "h": 900,
+      "props": {
+        "label": "LUMEN HARBOR / REMEDIATION",
+        "title": "Recovery plan",
+        "text": "Fictional, low-risk actions for the synthetic service-health scenario."
+      }
+    },
+    {
+      "id": "remediation-list",
+      "type": "list",
+      "x": 70,
+      "y": 150,
+      "w": 1060,
+      "h": 600,
+      "parent": "remediation-board",
+      "props": {
+        "label": "PROPOSED STEPS / SYNTHETIC",
+        "items": [
+          "Check the fictional API cache policy, then remeasure latency.",
+          "Review one edge region's synthetic health checks before changing traffic.",
+          "Drain queued sample jobs gradually and confirm the count trends down."
+        ]
+      }
+    }
+  ],
+  "behaviours": [
+    {
+      "id": "zoom-threshold-note",
+      "on": {
+        "event": "camera.enter",
+        "target": "zoom-target",
+        "minZoom": 0.9
+      },
+      "actions": [
+        {
+          "command": "object.update",
+          "target": "test-note",
+          "props": {
+            "text": "Zoom threshold reached: synthetic detail reveal active."
+          }
+        }
+      ]
+    }
+  ],
+  "sources": {},
+  "camera": {
+    "initial": "zoom-target"
+  }
+}

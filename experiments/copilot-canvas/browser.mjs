@@ -1,4 +1,7 @@
 // Experimental adapter; the original Contextarium runtime is unmodified.
+import { validateLayout } from "./layout-browser.mjs";
+import { layoutContract } from "./layout-contract.mjs";
+
 const fw=window.contextarium;
 if(!fw)throw Error("Contextarium runtime missing");
 const client=crypto.randomUUID?.()??Array.from(crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,"0")).join("");
@@ -41,6 +44,13 @@ connection.onmessage=e=>{
       const input=m.input||{};
       const state=fw.getState();
       if(m.operation==="state")result={...state,bridgeEpoch:stamp()};
+      else if(m.operation==="layout"){
+        if(input.expectedRevision!==state.revision||input.expectedEpoch!==stamp())throw Error("stale workspace; inspect again");
+        if(input.candidateScene&&!input.samples?.length)throw Error("candidateScene requires viewport samples");
+        const samples=await validateLayout(input.candidateScene||state.scene,input.samples);
+        if(receivedEpoch!==epoch||state.revision!==fw.getState().revision)throw Error("workspace changed during layout validation; inspect again");
+        result={layoutVersion:layoutContract.version,source:input.candidateScene?"candidate":"workspace",revision:state.revision,bridgeEpoch:stamp(),samples};
+      }
       else if(m.operation==="batch"){
         if(input.expectedRevision!==undefined&&(input.expectedRevision!==state.revision||input.expectedEpoch!==stamp()))throw Error("stale workspace; inspect again");
         const vetoes=[];const handler=e=>vetoes.push(e.detail);

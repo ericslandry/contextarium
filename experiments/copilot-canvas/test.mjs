@@ -2,6 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {createBroker} from "./broker.mjs";
 import {startCanvas} from "./server.mjs";
+import {makeActions} from "./actions.mjs";
 test("broker correlates replies and rejects stale clients",async()=>{
  const b=createBroker({timeoutMs:100});let message;const drop=b.attach("client-a",m=>message=m);
  const result=b.call("state");assert.equal(b.ack("client-b",{id:message.id,ok:true}),false);
@@ -18,6 +19,11 @@ test("loopback server serves experimental HTML and round trips SSE command / HTT
  let reader;
  try{
    const html=await (await fetch(instance.url)).text();assert.match(html,/src="\.\/browser\.mjs"/);
+   assert.match(html,/frame-src 'self'/);
+   const preview=await (await fetch(instance.url+"layout-preview")).text();
+   assert.match(preview,/container-type: size/);
+   assert.doesNotMatch(preview,/src="\.\/browser\.mjs"/);
+   assert.match((await fetch(instance.url+"layout-browser.mjs")).headers.get("content-type"),/javascript/);
    assert.equal((await fetch(origin+"/")).status,404);
    const events=await fetch(instance.url+"events?client="+client);reader=events.body.getReader();
    const decoder=new TextDecoder();let pending="";
@@ -27,5 +33,22 @@ test("loopback server serves experimental HTML and round trips SSE command / HTT
    const payload={client,id:message.id,ok:true,result:{revision:3}};
    const invalid=await fetch(instance.url+"ack",{method:"POST",headers:{"Content-Type":"application/json","Origin":"http://example.invalid"},body:JSON.stringify(payload)});assert.equal(invalid.status,403);
    const ack=await fetch(instance.url+"ack",{method:"POST",headers:{"Content-Type":"application/json","Origin":origin},body:JSON.stringify(payload)});assert.equal(ack.status,200);assert.deepEqual(await result,{revision:3});
+   const actions=makeActions(()=>instance);
+   const guide=await actions.find(a=>a.name==="authoring_guide").handler();
+   assert.deepEqual(guide.layoutContract.components.metric.minimum,[320,220]);
+   const validate=actions.find(a=>a.name==="validate_layout");
+   assert.equal(validate.inputSchema.properties.samples.maxItems,6);
+   const input={expectedRevision:3,expectedEpoch:"fixture:0",samples:[{width:440,height:650,focus:"risk"}]};
+   const validation=validate.handler({instanceId:"fixture",input});
+   const request=JSON.parse((await frame()).slice(6));
+   assert.equal(request.operation,"layout");
+   assert.deepEqual(request.input,input);
+   const measured={layoutVersion:1,revision:3,bridgeEpoch:"fixture:0",samples:[{
+     findings:[{type:"content_overflow",objectId:"risk",measurements:{occupiedBounds:{h:218}},suggestion:"Increase available height."}]
+   }]};
+   const layoutAck=await fetch(instance.url+"ack",{method:"POST",headers:{"Content-Type":"application/json","Origin":origin},
+     body:JSON.stringify({client,id:request.id,ok:true,result:measured})});
+   assert.equal(layoutAck.status,200);
+   assert.deepEqual(await validation,measured);
  }finally{await reader?.cancel();await instance.close();}
 });
