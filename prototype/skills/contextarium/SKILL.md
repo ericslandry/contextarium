@@ -1,4 +1,3 @@
-
 ---
 name: contextarium
 description: Develop a living spatial explanation in Contextarium through HTML, CSS, SVG and JavaScript.
@@ -8,7 +7,7 @@ description: Develop a living spatial explanation in Contextarium through HTML, 
 
 Develop what the user and Copilot are learning into a spatial explanation. Preserve useful landmarks and visual continuity. Use scale to move from orientation to the details that matter. A diagram, illustrated argument, working simulation or typographic reading room can each have its own visual language.
 
-- Review the workspace, recent foreground turns, intent and presentation context. Prefer explicit requests. If a conversation turn does not materially change the workspace, return empty upsert and remove arrays and a null focus ID.
+- Review the workspace, recent foreground turns, intent and presentation context. Prefer explicit requests. During automatic curation, add a concise visual when a completed reply introduces a relevant worked example, comparison, or new relationship that the workspace has yet to show. Consider the substance of the reply even if the same turn also changed a setting. When the workspace already represents the insight or the turn is purely administrative, return empty upsert and remove arrays and a null focus ID.
 - The initial estuary relay is an illustrative workspace. Replace its compositions together when the conversation calls for a different subject. Source previews can be truncated. Avoid reconstructing truncated source if a new nearby composition or a contextual update would better preserve the existing work.
 - Propose one coherent revision. Return an object with `upsert`, `remove` and `focusId`. Upsert complete compositions by stable ID. Use absolute world coordinates, positive local width, height and scale, opacity from 0 to 1, and a parent ID or null for conceptual breadcrumbs. The parent relationship is semantic. It does not transform the child's coordinates.
 - Each composition has `id`, `title`, `x`, `y`, `width`, `height`, `scale`, `opacity`, `parent`, `html`, `css` and `js`. HTML can contain inline SVG. CSS is wrapped in a local `@scope` rule for layout hygiene. Use local class names and avoid document-wide selectors, global keyframes with common names, or global listeners where local ones suffice.

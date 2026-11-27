@@ -85,8 +85,9 @@ test('browser renders both scenes, publishes without stealing the camera, and cl
       await screenshot('relay-overview');
       await evaluate("document.querySelector('[data-step]').click()");
       assert.equal(await evaluate("document.querySelector('[data-queue]').value"), '1');
+      const initialZoom = await evaluate("new DOMMatrix(getComputedStyle(document.querySelector('#world')).transform).a");
       await evaluate("document.querySelector('#demo-update').click(); document.querySelector('#zoom-in').click();");
-      await wait(140);
+      await eventually(() => evaluate("Math.abs(new DOMMatrix(getComputedStyle(document.querySelector('#world')).transform).a - " + (initialZoom * 1.38) + ") < 0.0001"), 'manual zoom applied');
       const manual = await evaluate("document.querySelector('#world').style.transform");
       await eventually(() => present('#surface-demo-update'), 'coalesced background publication');
       assert.equal(await evaluate("document.querySelector('[data-queue]').value"), '1');

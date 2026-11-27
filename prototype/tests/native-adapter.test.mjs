@@ -60,7 +60,7 @@ test('native adapter feeds attributed conversation to a workflow and publishes i
     assert.equal(update.revision, 1);
     assert.equal(update.upsert[0].id, 'result-1');
     assert.deepEqual(fixture.jobs[0].args.conversation, [{ user: 'Focus on the estuary', assistant: 'Use a new composition' }]);
-    assert.match(fixture.jobs[0].prompt, /Author a Contextarium workspace/);
+    assert.match(fixture.jobs[0].prompt, /^# Author a Contextarium workspace/);
     assert.equal(fixture.jobs[0].options.notifyOnComplete, false);
     assert.equal(Object.hasOwn(fixture.jobs[0].agent, 'tools'), false);
     assert.deepEqual(await invoke('set_automatic_composition', { enabled: false }), { automatic: false });
