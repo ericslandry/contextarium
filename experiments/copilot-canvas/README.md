@@ -48,6 +48,13 @@ If the earlier Fieldwork experiment was installed, close its canvas and remove o
 | Composition | authoring_guide returns original contract, style guide and example | Ask agent to compose a synthetic workspace; review coherence and schema |
 | Feedback | Request correlation, revision/epoch check, acknowledgement, veto event collection | Reject invalid/stale commands; inspect after disconnect or timeout |
 | Zoom-triggered reasoning | Optional manual-zoom heuristic, off by default; camera telemetry | Enable checkbox, manually cross a declared threshold, verify one queued turn; test agent motion does not prompt |
+| Composition quality | Component sizing and fitting, browser measurements, and `validate_layout` | Detect and correct overflow and heading obstruction in the original Lumen Harbor fixture |
+
+### Repeat the visual regression without Copilot
+
+From this directory run `node prepare.mjs` and `node --test test.mjs layout-test.mjs`. The visual suite launches a headless Chromium browser and drives the real Canvas actions against its renderer using a deterministic provider. It uses Edge on Windows and `chromium` elsewhere by default. Set `CONTEXTARIUM_BROWSER` to another Chromium executable or `CONTEXTARIUM_TEST_TEMP` to a writable temporary directory when necessary. The transport suite also exercises a mock renderer acknowledgement.
+
+The scanner samples visible scene objects and uses text bounds, object rectangles and rendered font sizes. It exempts scrollable table content and legitimate ancestor containment. The sizing model and measurement run only in the experiment. It is an advisory, sampled check. It cannot assess contrast, whether symbols are semantically clear, or every camera position, and it treats unrelated overlapping boxes conservatively.
 
 The host-dependent paths, including session.send mode enqueue and whether the host permits SSE, same-origin POSTs and browser crypto inside its iframe, are not verified in this environment. If crypto.randomUUID is unavailable, use a browser-supported random identifier. The runtime revision resets on scene replacement; bridgeEpoch combines a random renderer identity and a counter that changes on scene replacement and disconnect. Always inspect a newly opened panel. Acknowledgement timeout means outcome unknown. No durable synchronization or automatic replay is implemented. The existing runtime supports camera flights, not generalized multi-step choreography. Production authentication, stronger session fencing, rate limits, full schemas and provider autonomy are outside this proof of concept.
 

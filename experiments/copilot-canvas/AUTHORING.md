@@ -4,6 +4,27 @@ Read the runtime contract and design guide returned by authoring_guide. Inspect 
 
 Use trusted types board, text, metric, list, chart, table and controls. Explicitly specify world coordinates and dimensions; nested child coordinates are relative to their board. Keep stable IDs, avoid overlap, use concise titles, whitespace and hierarchy, and provide information at multiple scales using semantic variants. No arbitrary code, HTML or CSS. Avoid unsolicited camera changes while the user is exploring.
 
+## Size and validate before presenting a scene
+
+`authoring_guide` returns the versioned `layoutContract` with minimum and recommended dimensions, content capacity, padding and typography ranges. Start with recommended sizes, and budget for wrapping and every semantic variant. For example, a metric starts at 320 × 220 world units and 480 × 300 is recommended for a short label, title and value. Put explanation in a separate text card. The experimental renderer fits padding and typography within fixed limits. It keeps the authored position and size, so oversized content still needs a composition change.
+
+Reserve at least the top 200 world units of each board for its heading. The measured zone can be deeper when labels, headings or descriptions wrap. Put children below the depth reported as `minimumBoardLocalY` and keep them within the board. Parent containment is intentional. Intersections between unrelated rendered objects are reported as overlaps.
+
+For a new composition, pass `candidateScene` together with samples to `validate_layout` before publishing. After loading a scene or applying commands, inspect the workspace and call `validate_layout` with the same revision and epoch. With no samples the action checks the live DOM for structural defects. For readability, request representative viewports, focus targets and scales. The preview uses the same renderer and fitting rules without moving the live camera or executing behaviours and data sources. Sample both sides of each important semantic threshold. Set `minTextPx: 0` on a map sample where tiny labels are intentional. A focused sample defaults to a 12 CSS-pixel text-size check.
+
+```json
+{
+  "expectedRevision": 1,
+  "expectedEpoch": "replace-with-live-bridgeEpoch",
+  "samples": [
+    {"width": 480, "height": 820, "focus": "agent-summary"},
+    {"width": 1000, "height": 750, "focus": "agent-details", "zoom": 1.4}
+  ]
+}
+```
+
+Findings carry severity, object IDs, component and active variant, measured bounds or font size, and a suggested correction. For `content_overflow`, compare `occupiedBounds` with `bounds` and resize, shorten or split the content. For `heading_obstructed` or `heading_zone_intrusion`, move the child below `minimumBoardLocalY`. Resolve `object_overlap` by moving or resizing a covering object. Use `apply_commands` and revalidate until the relevant samples have no layout errors and readability warnings are understood. If `omittedFindings` is nonzero, repair the reported findings and rerun. Advisory diagnostics can describe an already-committed scene, so run the check before telling the user the scene is ready.
+
 Example apply_commands input (replace revision/epoch with actual values):
 ```json
 {
