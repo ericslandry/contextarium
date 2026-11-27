@@ -1,8 +1,15 @@
-# Validation record — Copilot Canvas experiment
+# Contextarium validation history
+
+The entries below record the experiment as tested at the time. For current procedures, see the [README](../README.md) and [plugin guide](COPILOT-PLUGIN.md).
+
+## Desktop acceptance and marketplace packaging
+
+- The [live layout acceptance check](https://github.com/ericslandry/contextarium/issues/1#issuecomment-7216967858) in Copilot desktop 1.5.0 found 8 errors and 4 warnings in the original fixture. Copilot repaired the scene and verified zero findings across three viewport samples.
+- [Native packaging validation](https://github.com/ericslandry/contextarium/pull/3) verified authenticated private marketplace installation, fresh sessions with and without a repository, and a native update from 0.1.0 to 0.1.1. Disable, uninstall and reinstall were exercised without submitting a chat prompt.
 
 ## Layout regression for issue #1
 
-- `fixtures/lumen-harbor-original.json` records the synthetic scene passed to the original live `load_scene` call.
+- [The Lumen Harbor fixture](../tests/fixtures/lumen-harbor-original.json) records the synthetic scene passed to the original live `load_scene` call.
 - Node.js 24.22.3 and headless Edge 158 ran `node --test test.mjs layout-test.mjs` with 8 passing tests, including the browser suite and its four subtests. The repository smoke test also passed. The browser suite exercises the production experimental server, SSE/HTTP bridge, canonical renderer and Canvas action handlers with a deterministic provider.
 - Chromium measured 145 units of occupied content in the original 130-unit metric and reported a 270.4-unit heading zone where a card began at y = 120. Candidate preview reproduced the obstruction while preserving the authoritative workspace. The mock agent resized and moved objects with normal commands, remeasured after heading text wrapped, and obtained zero layout errors in the 520 × 980 overview, 440 × 650 metric focus, and 1000 × 720 findings samples. The heading and metrics passed the respective 10-pixel overview and 12-pixel detail checks.
 - Additional cases cover ancestor containment, sibling overlap, child escape, hidden objects, touching edges, semantic variants, unreadable text, intended table scrolling, stale revisions and the live-DOM validation route.
@@ -50,12 +57,3 @@ Tested blob identities: broker.mjs `7de8dd07baf28347afbd4a2f2369d530b6cf6990`; s
 - Invoking canvas actions from a live Copilot agent, the exact behavior of session.send(mode: enqueue), prompts while busy, and whether iframe origin/SSE restrictions require changes.
 - Full end-to-end agent composition, camera veto/arrival feedback, opt-in zoom heuristics, reconnect and proactive updates in the real panel.
 - Production security and full machine-readable schema coverage. Current action schemas constrain message shapes; the existing runtime is the final validator. Use synthetic data only.
-
-## Local go/no-go order
-
-1. Run prepare.mjs, node --test test.mjs, and demo.mjs in an ordinary browser. Verify the new card and timed update.
-2. Review the installed SDK guide, run prepare.mjs --install and reload the extension.
-3. Open canvas ID contextarium-experiment; ask the agent to inspect_workspace and apply_commands with an upsert.
-4. Ask for more context using the UI. Verify the agent is invoked in the same session; repeat while the agent is busy.
-5. Verify unsolicited updates, camera takeover, opt-in zoom, and a fresh independently composed scene.
-6. Record observed incompatibilities; adjust or remove experimental modules only. Do not change the canonical runtime as part of this investigation.

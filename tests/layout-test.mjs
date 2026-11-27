@@ -6,9 +6,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
-import { makeActions } from "./actions.mjs";
-import { layoutContract } from "./layout-contract.mjs";
-import { startCanvas } from "./server.mjs";
+import { makeActions } from "../connect/actions.mjs";
+import { layoutContract } from "../core/layout-contract.mjs";
+import { startCanvas } from "../connect/server.mjs";
 
 const original = JSON.parse(await readFile(new URL("fixtures/lumen-harbor-original.json", import.meta.url), "utf8"));
 const viewport = { width: 520, height: 980 };

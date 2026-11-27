@@ -2,11 +2,11 @@ import {createServer} from "node:http";
 import {randomBytes} from "node:crypto";
 import {readFile} from "node:fs/promises";
 import {createBroker} from "./broker.mjs";
-import {withComponentFitting} from "./layout-contract.mjs";
-import {resolveAssetRoot} from "./assets.mjs";
+import {withComponentFitting} from "../core/layout-contract.mjs";
 
-const here=new URL("./",import.meta.url);
+const root=new URL("../",import.meta.url);
 const assetNames=["index.html","scene.json","scene-http.json","risk-details.json","risk-click.json"];
+const moduleNames=["connect/browser.mjs","core/layout-browser.mjs","core/layout-contract.mjs"];
 const eventsAllowed=new Set(["scene.ready","scene.changed","widget.action","camera.enter","camera.leave","camera.arrived","camera.interrupted","data.loaded"]);
 const json=(res,code,value)=>{res.writeHead(code,{"Content-Type":"application/json","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"});res.end(JSON.stringify(value));};
 async function body(req){
@@ -14,16 +14,23 @@ async function body(req){
   let size=0,parts=[];for await(const chunk of req){size+=chunk.length;if(size>1024*1024)throw Error("request too large");parts.push(chunk);}
   return JSON.parse(Buffer.concat(parts).toString("utf8"));
 }
-export async function startCanvas({onPrompt=async()=>{throw Error("No Copilot session; use standalone demo");},allowPrompts=true,assetRoot,timeoutMs=12000}={}){
-  assetRoot ??= await resolveAssetRoot();
-  const assets=Object.fromEntries(await Promise.all(assetNames.map(async name=>[name,await readFile(new URL(name,assetRoot),"utf8")])));
+export async function startCanvas({
+  onPrompt=async()=>{throw Error("No provider connected");},allowPrompts=true,
+  assistantName="provider",requestEvent="ask-provider",timeoutMs=12000
+}={}){
+  // These host-selected values are embedded as HTML attributes.
+  if(!/^[a-zA-Z][a-zA-Z0-9 -]{0,31}$/.test(assistantName)||!/^[a-z][a-z0-9-]{0,63}$/.test(requestEvent)){
+    throw Error("Invalid workspace provider configuration");
+  }
+  const assets=Object.fromEntries(await Promise.all(assetNames.map(async name=>[name,await readFile(new URL(name,root),"utf8")])));
   const modules=Object.fromEntries(await Promise.all(
-    ["browser.mjs","layout-browser.mjs","layout-contract.mjs"].map(async name=>[name,await readFile(new URL(name,here),"utf8")])
+    moduleNames.map(async name=>[name,await readFile(new URL(name,root),"utf8")])
   ));
-  // Only alter the served experimental copy. Canonical Contextarium HTML stays unchanged.
+  // Decorate the canonical page for connected use without a second runtime file.
   if(!assets["index.html"].includes("</body>"))throw Error("unsupported runtime HTML");
   const preview=withComponentFitting(assets["index.html"]);
-  const html=preview.replace("</body>",'<script type="module" src="./browser.mjs"></script></body>')
+  const html=preview.replace("</body>",
+    `<script type="module" src="./connect/browser.mjs" data-assistant="${assistantName}" data-request-event="${requestEvent}"></script></body>`)
     .replace("script-src 'unsafe-inline'","script-src 'self' 'unsafe-inline'; frame-src 'self'");
   const token=randomBytes(24).toString("hex"), broker=createBroker({timeoutMs});
   let stream=null, origin="", lastPrompt=0, promptBusy=false, closed=false;
@@ -61,7 +68,7 @@ export async function startCanvas({onPrompt=async()=>{throw Error("No Copilot se
         broker.record(data.client,data.event);return json(res,200,{ok:true});
       }
       if(!allowPrompts)return json(res,403,{error:"prompts disabled"});
-      // Explicit Ask Copilot or opt-in manual-zoom affordance; passive telemetry never prompts.
+      // Explicit provider request or opt-in manual zoom; passive telemetry never sends a prompt.
       if(promptBusy||Date.now()-lastPrompt<2500)return json(res,429,{error:"prompt already pending or rate limited"});
       if(typeof data.target!=="string"||!/^[a-z][a-z0-9_-]{0,63}$/i.test(data.target))return json(res,400,{error:"invalid target"});
       promptBusy=true;lastPrompt=Date.now();

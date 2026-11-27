@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {Script} from 'node:vm';
+import {workspaceInputs} from '../core/contracts.mjs';
 const read = name => readFileSync(new URL('../'+name,import.meta.url),'utf8');
 const json = name => JSON.parse(read(name));
 const html = read('index.html');
@@ -14,6 +15,10 @@ assert.equal(scene.version,1);
 assert.match(html, /<title>Contextarium\b/);
 assert.match(scene.title, /^Contextarium\b/);
 assert.match(scripts[0][1], /window\.contextarium=window\.fieldwork=Object\.freeze/);
+const validator = scripts[0][1].split('function validCommand(c){')[1].split('function validResponseCommand')[0];
+const actualCommands = [...validator.matchAll(/case '([^']+)'/g)].map(([,name])=>name).filter(name=>name!=='data.fetch');
+assert.deepEqual(workspaceInputs.batch.properties.commands.items.properties.command.enum.toSorted(),actualCommands.toSorted());
+assert.deepEqual(Object.keys(scene).toSorted(),workspaceInputs.scene.properties.scene.required.toSorted());
 assert.equal(new Set(scene.objects.map(o=>o.id)).size,scene.objects.length);
 for(const o of scene.objects) if(o.parent) assert.ok(scene.objects.some(p=>p.id===o.parent));
 const http=json('scene-http.json');

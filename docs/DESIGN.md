@@ -1,12 +1,10 @@
-# Contextarium design guide (initial draft)
+# Contextarium design guide
 
-This is proposed provider guidance, not a ratified theme specification. The runtime remains responsible for rendering and mechanics; the provider supplies geometry and composition.
+The provider supplies geometry and composition. Contextarium applies trusted component rendering and reports measurable layout issues.
 
-- Preserve the dark drafting-board aesthetic, restrained accent colors, clear labels and readable hierarchy. Do not encode meaning by color alone.
-- Organize by concepts, not arbitrary decoration. Prefer a short summary at overview scale and meaningful additional detail at closer scales.
-- Explicitly set geometry. Leave sufficient margins and avoid overlapping unrelated objects. Boards are optional; their dimensions are not fixed.
-- Use the existing trusted components: board, text, metric, list, chart, table and controls. The root README describes their accepted properties and behaviors.
-- Camera flights should explain relationships; avoid unnecessary motion. Respect reduced-motion preferences and human camera control.
-- Data must remain declarative. Do not supply arbitrary HTML, JavaScript or styles.
-
-Future work: formal token definitions, examples, component sizing rules, accessibility criteria and rendered-composition validation.
+- Use a clear hierarchy, explicit labels and cues that do not rely on color alone. Preserve the dark drafting-board aesthetic and restrained accents.
+- Organize by concept. Prefer a short overview and meaningful detail at closer scales. Use semantic variants where the information should change as users explore.
+- Set geometry explicitly and leave margins between unrelated objects. Board dimensions are flexible. Keep board children below the heading zone and verify title wrapping at the intended viewport.
+- Use the trusted components and declared properties in the [scene contract](SCENE-CONTRACT.md). Refer to [component sizing](../core/layout-contract.mjs) for dimensions and content capacity, and review rendered findings as described in the [authoring guide](AUTHORING.md).
+- Use camera flights to explain relationships. Respect reduced-motion preferences and human camera control. Content should remain useful after a camera veto.
+- Keep content declarative and use readable text, labels, or values that fit each authored box.

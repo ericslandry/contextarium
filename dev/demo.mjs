@@ -1,4 +1,4 @@
-import {startCanvas} from "./server.mjs";
+import {startCanvas} from "../connect/server.mjs";
 const instance=await startCanvas({onPrompt:async target=>{
   const state=await instance.broker.call("state");
   const x=Math.max(0,...state.scene.objects.filter(n=>!n.parent).map(n=>n.x+n.w))+180;
