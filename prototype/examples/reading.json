@@ -1,0 +1,34 @@
+{
+  "format": "contextarium-workspace",
+  "version": 1,
+  "compositions": [
+    {
+      "id": "essay",
+      "title": "The right to revise",
+      "x": 0,
+      "y": 0,
+      "width": 645,
+      "height": 720,
+      "scale": 1,
+      "opacity": 1,
+      "parent": null,
+      "html": "\n<article class=\"essay\">\n  <span>FIELD NOTES ON COLLABORATIVE REASONING</span><h1>The right<br>to revise</h1>\n  <p class=\"intro\">A workspace becomes a place to think when conclusions can move without erasing how people got there.</p>\n  <div class=\"columns\"><section><h2>Keep the landmarks</h2><p>Leave familiar points of orientation visible. Replacing every panel at once forces the reader to rebuild their mental map, even when the argument has barely changed.</p></section><section><h2>Expose the change</h2><p>Move closer to an assumption and show the evidence that altered it. A small revision can communicate more than a fresh overview.</p></section></div>\n  <footer>Reading room · Editorial composition</footer>\n</article>",
+      "css": "\n.essay { height: 100%; padding: 36px 43px; background: #f2e8d3; color: #28231e; box-shadow: 0 28px 55px #0005; }\nspan { font: 700 12px system-ui; letter-spacing: .15em; color: #744435; }\nh1 { font: 500 84px/.9 Georgia, serif; letter-spacing: -.07em; margin: 16px 0; }\np { font: 24px/1.34 Georgia, serif; margin: 0; }\n.intro { font-size: 27px; line-height: 1.22; max-width: 605px; border-bottom: 1px solid #aa8d76; padding-bottom: 20px; }\n.columns { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }\nh2 { font: 700 25px Georgia, serif; margin: 0 0 7px; }\nfooter { margin-top: 17px; font: 13px system-ui; color: #744435; }\n",
+      "js": ""
+    },
+    {
+      "id": "margins",
+      "title": "Questions in the margin",
+      "x": 700,
+      "y": 55,
+      "width": 430,
+      "height": 410,
+      "scale": 1,
+      "opacity": 1,
+      "parent": "essay",
+      "html": "\n<aside class=\"margin\"><span>ANNOTATION</span><h2>What changed?</h2><ol><li>Identify the previous assumption.</li><li>Put the new evidence beside it.</li><li>Leave a way back to the overview.</li></ol><blockquote>Make the revision visible at the scale where it matters.</blockquote></aside>",
+      "css": "\n.margin { border-radius: 0 13px 13px 0; border-left: 6px solid #d3a790; background: #48323a; color: #f7e6dc; height: 100%; padding: 34px; }\nspan { font-size: 12px; letter-spacing: .15em; color: #eccbb5; }\nh2 { font: 500 44px Georgia, serif; letter-spacing: -.04em; margin: 12px 0; }\nol { padding-left: 22px; font-size: 18px; line-height: 1.55; }\nblockquote { font: italic 22px/1.3 Georgia, serif; padding-top: 14px; border-top: 1px solid #b88b81; margin: 0; }\n",
+      "js": ""
+    }
+  ]
+}

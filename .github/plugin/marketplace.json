@@ -8,6 +8,11 @@
       "name": "contextarium",
       "description": "Open and compose Contextarium spatial workspaces in GitHub Copilot Canvas.",
       "source": "."
+    },
+    {
+      "name": "contextarium-redesign",
+      "description": "Preview the separate Contextarium redesign prototype.",
+      "source": "./prototype"
     }
   ]
 }

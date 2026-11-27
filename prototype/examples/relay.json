@@ -1,0 +1,48 @@
+{
+  "format": "contextarium-workspace",
+  "version": 1,
+  "compositions": [
+    {
+      "id": "relay",
+      "title": "The estuary relay",
+      "x": 0,
+      "y": 0,
+      "width": 900,
+      "height": 480,
+      "scale": 1,
+      "opacity": 1,
+      "parent": null,
+      "html": "\n<section class=\"relay-board\">\n  <header><span>COASTAL OBSERVATORY</span><h1>The estuary relay</h1><p>From field signal to a reading a researcher can trust.</p></header>\n  <svg class=\"plot\" viewBox=\"0 0 810 215\" role=\"img\" aria-label=\"Four observation stages connected in sequence\">\n    <defs><linearGradient id=\"relay-line\"><stop stop-color=\"#c9eea3\"/><stop offset=\"1\" stop-color=\"#75d7d3\"/></linearGradient></defs>\n    <path d=\"M20 163 Q130 37 229 142 T437 132 T641 110 T790 133\" fill=\"none\" stroke=\"#91adb52b\" stroke-width=\"1.5\"/>\n    <path d=\"M20 176 Q130 50 229 155 T437 145 T641 123 T790 146\" fill=\"none\" stroke=\"#91adb52b\" stroke-width=\"1.5\"/>\n    <path d=\"M20 189 Q130 63 229 168 T437 158 T641 136 T790 159\" fill=\"none\" stroke=\"#91adb52b\" stroke-width=\"1.5\"/>\n    <path d=\"M94 91 H716\" stroke=\"url(#relay-line)\" stroke-width=\"3\" stroke-dasharray=\"8 7\"/>\n    <g class=\"stations\" fill=\"#183039\" stroke=\"#c9eea3\" stroke-width=\"2\">\n      <circle cx=\"94\" cy=\"91\" r=\"24\"/><rect x=\"286\" y=\"67\" width=\"48\" height=\"48\" rx=\"8\"/>\n      <path d=\"M517 65 l26 26 -26 26 -26 -26Z\"/><circle cx=\"716\" cy=\"91\" r=\"24\"/>\n    </g>\n    <g class=\"numbers\" fill=\"#e7f4d4\" text-anchor=\"middle\">\n      <text x=\"94\" y=\"97\">01</text><text x=\"310\" y=\"97\">02</text><text x=\"517\" y=\"97\">03</text><text x=\"716\" y=\"97\">04</text>\n    </g>\n    <g fill=\"#e4eee9\" text-anchor=\"middle\">\n      <text x=\"94\" y=\"141\">Sense</text><text x=\"310\" y=\"141\">Buffer</text><text x=\"517\" y=\"141\">Verify</text><text x=\"716\" y=\"141\">Publish</text>\n    </g>\n  </svg>\n  <footer><strong>Field instruments sample continuously.</strong> The relay regulates when those readings can move forward.</footer>\n</section>",
+      "css": "\n.relay-board { width: 100%; height: 100%; padding: 33px 42px; overflow: hidden; border-radius: 18px; background: #16343e; border: 1px solid #57737a; color: #eef6eb; box-shadow: 0 22px 50px #0004; }\nheader span { color: #cbeca5; letter-spacing: .19em; font-size: 13px; font-weight: 650; }\nh1 { font-family: Georgia, serif; font-size: 77px; margin: 4px 0 6px; font-weight: 500; letter-spacing: -.056em; }\np { font-size: 21px; margin: 0; color: #c4dad9; }\n.plot { width: 100%; height: 212px; display: block; margin-top: 12px; overflow: visible; }\n.plot text { font: 18px system-ui; }\n.numbers text { font: 14px ui-monospace, monospace; }\nfooter { border-top: 1px solid #57737a; padding-top: 16px; color: #c4dad9; font-size: 15px; }\nfooter strong { color: #e7efc2; }\n",
+      "js": ""
+    },
+    {
+      "id": "buffer",
+      "title": "Buffer lab",
+      "x": 952,
+      "y": 0,
+      "width": 452,
+      "height": 480,
+      "scale": 1,
+      "opacity": 1,
+      "parent": "relay",
+      "html": "\n<section class=\"lab\">\n  <span>INTERACTIVE MODEL</span><h2>Buffer lab</h2><p>Change the arrival rate and see when the relay falls behind.</p>\n  <label>Samples / tick <output data-rate>6</output><input aria-label=\"Samples per tick\" type=\"range\" min=\"1\" max=\"12\" value=\"6\"></label>\n  <div class=\"meter\" aria-hidden=\"true\"><div data-fill></div></div>\n  <p class=\"reading\"><output data-queue>0</output> samples waiting</p>\n  <div class=\"lab-buttons\"><button type=\"button\" data-step>Step</button><button type=\"button\" data-play>Run</button><button type=\"button\" data-reset>Reset</button></div>\n  <small>The link publishes five samples each tick.</small>\n</section>",
+      "css": "\n.lab { height: 100%; border-radius: 18px; background: #e9edaa; color: #243124; padding: 33px; border: 1px solid #eef4b9; box-shadow: 0 22px 50px #0003; }\n.lab span { font-size: 12px; letter-spacing: .16em; font-weight: 750; }\nh2 { font-family: Georgia, serif; font-size: 55px; font-weight: 500; line-height: 1; margin: 9px 0; letter-spacing: -.05em; }\np { font-size: 18px; line-height: 1.38; margin: 0 0 18px; }\nlabel { display: block; font-weight: 700; }\nlabel output { float: right; }\ninput { display: block; width: 100%; accent-color: #26493a; margin: 10px 0 16px; }\n.meter { border: 1px solid #6e8162; border-radius: 6px; height: 15px; overflow: hidden; background: #d4d68f; }\n.meter div { height: 100%; width: 0; background: #294f44; transition: width 180ms ease-out; }\n.reading { margin: 9px 0 15px; }\n.reading output { font-weight: 750; }\n.lab-buttons { display: flex; gap: 8px; margin-bottom: 14px; }\nbutton { color: #233125; background: #f3f4c9; border-color: #81906d; font-size: 16px; }\nsmall { font-size: 14px; }\n@media (prefers-reduced-motion: reduce) { .meter div { transition: none; } }\n",
+      "js": "\nconst input = root.querySelector('input');\nconst rate = root.querySelector('[data-rate]');\nconst queue = root.querySelector('[data-queue]');\nconst fill = root.querySelector('[data-fill]');\nconst play = root.querySelector('[data-play]');\nconst options = { signal: lifecycle.signal };\nlet waiting = 0;\nlet timer;\nconst draw = () => { queue.value = waiting; fill.style.width = Math.min(100, waiting * 5) + '%'; };\nconst step = () => { waiting = Math.max(0, waiting + Number(input.value) - 5); draw(); };\nconst pause = () => { clearInterval(timer); timer = undefined; play.textContent = 'Run'; };\ninput.addEventListener('input', () => { rate.value = input.value; }, options);\nroot.querySelector('[data-step]').addEventListener('click', step, options);\nroot.querySelector('[data-reset]').addEventListener('click', () => { pause(); waiting = 0; draw(); }, options);\nplay.addEventListener('click', () => {\n  if (timer) return pause();\n  timer = setInterval(step, 450);\n  play.textContent = 'Pause';\n}, options);\nlifecycle.onCleanup(pause);\n"
+    },
+    {
+      "id": "verified",
+      "title": "Verification notes",
+      "x": 155,
+      "y": 530,
+      "width": 710,
+      "height": 238,
+      "scale": 1,
+      "opacity": 1,
+      "parent": "relay",
+      "html": "\n<section class=\"aside\"><span>VERIFY</span><h2>Readings need context</h2><p>Compare a sample with its local range and the most recent adjacent station before publication. An unusual signal is evidence to investigate.</p></section>",
+      "css": "\n.aside { height: 100%; padding: 26px 33px; border-radius: 15px; background: #22353c; border: 1px solid #678087; color: #e6efeb; }\nspan { font-size: 13px; color: #e4ed9d; letter-spacing: .15em; }\nh2 { font-family: Georgia, serif; font-size: 43px; font-weight: 500; letter-spacing: -.03em; margin: 5px 0; }\np { font-size: 19px; line-height: 1.5; margin: 9px 0 0; color: #ccdcd9; }\n",
+      "js": ""
+    }
+  ]
+}

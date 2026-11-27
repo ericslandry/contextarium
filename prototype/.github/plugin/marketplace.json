@@ -1,0 +1,7 @@
+{
+  "name": "contextarium-redesign",
+  "owner": { "name": "ericslandry" },
+  "plugins": [
+    { "name": "contextarium-redesign", "description": "Install the Contextarium redesign prototype.", "source": "./" }
+  ]
+}
