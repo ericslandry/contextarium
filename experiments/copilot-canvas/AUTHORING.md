@@ -1,4 +1,4 @@
-# Fieldwork Canvas authoring contract (experimental)
+# Contextarium Canvas authoring contract (experimental)
 
 Read the runtime contract and design guide returned by authoring_guide. Inspect the live workspace before every batch. The browser is authoritative; the provider does not maintain a synchronized scene. Use the returned revision and bridgeEpoch as expectedRevision and expectedEpoch. Reinspect after rejection or timeout; do not blindly retry. A successful mutation is not a guarantee that camera motion occurred or finished. Inspect follow and cameraVetoes; recent_events includes arrival and interruption.
 

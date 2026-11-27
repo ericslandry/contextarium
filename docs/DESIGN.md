@@ -1,4 +1,4 @@
-# Fieldwork design guide (initial draft)
+# Contextarium design guide (initial draft)
 
 This is proposed provider guidance, not a ratified theme specification. The runtime remains responsible for rendering and mechanics; the provider supplies geometry and composition.
 

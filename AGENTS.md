@@ -1,6 +1,6 @@
-# Fieldwork development instructions
+# Contextarium development instructions
 
-Read docs/Fieldwork-Architecture.md before changing architecture. The root README describes the recovered implementation and its current contract, not all target capabilities.
+Read docs/Contextarium-Architecture.md before changing architecture. The root README describes the recovered implementation and its current contract, not all target capabilities.
 
 - Preserve standalone index.html with embedded JSON, no third-party runtime dependencies, optional HTTP connectivity.
 - Browser owns live workspace; external providers own composition and domain intelligence. No general-purpose editing by default.

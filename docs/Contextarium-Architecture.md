@@ -1,4 +1,4 @@
-# Fieldwork — Architecture Specification
+# Contextarium — Architecture Specification
 
 **Version:** 0.1 (architecture baseline)  
 **Date:** 2026-11-26  
@@ -6,11 +6,11 @@
 
 ## 1. Purpose and vision
 
-Fieldwork is a browser-native, interactive spatial workspace for exploring and working with information. It is not a slide deck, a general-purpose visual editor, or an AI application in its own right. Its purpose is to make dynamically generated information intuitive, coherent and visually engaging through a continuous two-dimensional world, semantic zoom and smooth visual choreography.
+Contextarium is a browser-native, interactive spatial workspace for exploring and working with information. It is not a slide deck, a general-purpose visual editor, or an AI application in its own right. Its purpose is to make dynamically generated information intuitive, coherent and visually engaging through a continuous two-dimensional world, semantic zoom and smooth visual choreography.
 
 The simplest deployment consists of a standalone HTML file with embedded JSON or an optional separate JSON document. The same runtime can be connected to an external application or agent that progressively constructs and modifies the workspace. No dedicated backend, AI service, framework or third-party runtime dependency is mandatory.
 
-Fieldwork is an independent derivative of Spatial Explainer. The original Spatial Explainer must remain unchanged. Its camera, continuous spatial world, drafting-board aesthetic and animation techniques are the starting point; previous Fieldwork experiments are requirements references, not the implementation foundation.
+Contextarium is an independent derivative of Spatial Explainer. The original Spatial Explainer must remain unchanged. Its camera, continuous spatial world, drafting-board aesthetic and animation techniques are the starting point; earlier Fieldwork experiments are requirements references, not the implementation foundation.
 
 ## 2. Agreed architecture decisions
 
@@ -19,9 +19,9 @@ Fieldwork is an independent derivative of Spatial Explainer. The original Spatia
 | AD-01 | Browser owns the authoritative live workspace for its session. | External systems provide data and commands, not a mandatory synchronized state store. |
 | AD-02 | JSON is the declarative boundary between the runtime and content providers. | Embedded, static, dynamically generated, pulled and pushed data use the same logical contract. |
 | AD-03 | Humans interact with the workspace but do not restructure it by default. | Providers declare affordances; direct manipulation is available only where explicitly enabled. No general visual authoring UI is required. |
-| AD-04 | External systems may initiate proactive changes. | Fieldwork can evolve without a preceding human interaction; push is optional in connected deployments. |
+| AD-04 | External systems may initiate proactive changes. | Contextarium can evolve without a preceding human interaction; push is optional in connected deployments. |
 | AD-05 | External systems may orchestrate visual choreography. | Camera navigation, reveals and animation sequences are declarative and locally executed; human navigation retains precedence. |
-| AD-06 | Spatial intelligence belongs to the content provider. | Fieldwork implements spatial mechanics and follows supplied layout instructions rather than inventing arrangements. |
+| AD-06 | Spatial intelligence belongs to the content provider. | Contextarium implements spatial mechanics and follows supplied layout instructions rather than inventing arrangements. |
 | AD-07 | Design system, component catalog and runtime contract are distinct artifacts. | Content providers can compose within a defined visual vocabulary, with objective constraints enforced by the runtime. |
 | AD-08 | Synchronization is optional, not foundational. | Stable object identifiers, serializable workspace state and versioned changes preserve the possibility of later persistence and synchronization. |
 
@@ -29,7 +29,7 @@ Fieldwork is an independent derivative of Spatial Explainer. The original Spatia
 
 ```mermaid
 flowchart LR
-  H[Human] <-->|Explore and interact| R[Fieldwork browser runtime]
+  H[Human] <-->|Explore and interact| R[Contextarium browser runtime]
   S[Embedded or static JSON] --> V[Validated JSON interface]
   P[External application or agent] <-->|Events, queries, commands and results| V
   V <--> R
@@ -61,7 +61,7 @@ The design system is a separate logical concern, even when its implementation is
 - Inspect existing workspace geometry where needed; preserve spatial continuity when adding or changing objects.
 - Handle domain operations, data access and any persistent external application state.
 
-Fieldwork may calculate geometry, fit the camera to bounds, resolve anchors and eventually offer deterministic grid/stack helpers. It is not responsible for deciding the semantic importance or ideal placement of information. Automatic intelligent layout is deferred.
+Contextarium may calculate geometry, fit the camera to bounds, resolve anchors and eventually offer deterministic grid/stack helpers. It is not responsible for deciding the semantic importance or ideal placement of information. Automatic intelligent layout is deferred.
 
 ## 4. Workspace and state model
 
@@ -101,9 +101,9 @@ The human can freely navigate the world and use the interaction affordances defi
 Example event-driven flow:
 
 1. A user zooms into a service within a system diagram.
-2. Fieldwork detects a declared semantic zoom threshold and requests details.
+2. Contextarium detects a declared semantic zoom threshold and requests details.
 3. The provider returns JSON describing a new details panel and its layout.
-4. Fieldwork validates and applies the change, revealing the panel smoothly without unnecessarily moving the user's camera.
+4. Contextarium validates and applies the change, revealing the panel smoothly without unnecessarily moving the user's camera.
 5. The provider may subsequently send unsolicited updates as additional findings become available.
 
 Choreography includes camera movements, sequential or concurrent reveals, emphasis, object transitions and ambient animation. It must be usable without narration or an audio-driven master timeline. The external provider specifies the desired sequence through data; the runtime handles timing, interpolation and interruption locally. Human navigation must override externally controlled camera movement. Whether interrupted sequences can resume, how unsolicited camera requests are presented, and how concurrent sequences arbitrate are detailed design decisions still open.
@@ -128,7 +128,7 @@ Recommended safeguards for the connected prototype include safe text rendering, 
 
 ## 9. Prototype status and remaining work
 
-The uploaded reference source is the original Spatial Explainer, not the rebuilt Fieldwork derivative. Inspection of that source confirms its fixed 1600 × 900 sheets, ring layout, cue/clock-driven reveals and camera/overview mechanics. The earlier conversation reported an independent Fieldwork derivative and tests, but its actual source files are not available in the current working directory. Consequently, the following status is based on reported prior work, not a fresh audit of Fieldwork.
+The uploaded reference source is the original Spatial Explainer, not the rebuilt Contextarium derivative. Inspection of that source confirms its fixed 1600 × 900 sheets, ring layout, cue/clock-driven reveals and camera/overview mechanics. The earlier conversation reported an independent Contextarium derivative and tests, but its actual source files are not available in the current working directory. Consequently, the following status is based on reported prior work, not a fresh audit of Contextarium.
 
 | Capability | Status / next action |
 | --- | --- |
@@ -148,7 +148,7 @@ The uploaded reference source is the original Spatial Explainer, not the rebuilt
 
 ## 10. Recommended implementation sequence
 
-1. **Reconcile the baseline.** Recover the independent Fieldwork source, verify lineage, run the existing demo, and check source licensing before redistribution. Do not modify Spatial Explainer.
+1. **Reconcile the baseline.** Recover the independent Contextarium source, verify lineage, run the existing demo, and check source licensing before redistribution. Do not modify Spatial Explainer.
 2. **Freeze a minimal contract.** Document supported objects, mutations, events, queries, versioning, batch validation, errors and snapshot semantics. Publish initial component catalog and design guide with reference examples. Enforce interaction-only defaults.
 3. **Validate connected operation.** Use a minimal deterministic test provider (not an AI agent) to retrieve details on interaction, respond with validated JSON, send an unsolicited update, and observe outcomes. Select a provisional push adapter only for the test. Keep standalone operation intact.
 4. **Generalize choreography.** Add local, interruptible declarative sequences beyond simple camera commands and reveals; check human precedence and reduced-motion behaviour.
@@ -163,7 +163,7 @@ The recommended next milestone is a standalone-capable runtime with a repeatable
 - A provider starts a local visual sequence; human navigation interrupts camera control.
 - Invalid data and unsupported actions are rejected without corrupting existing workspace state.
 - A snapshot round-trip reconstructs the same declarative objects and layout; stable IDs survive.
-- Generated compositions conform to the catalog and design guide; overlapping or unreadable content is reported or corrected by the provider rather than silently rearranged by Fieldwork.
+- Generated compositions conform to the catalog and design guide; overlapping or unreadable content is reported or corrected by the provider rather than silently rearranged by Contextarium.
 
 ## 11. Explicitly deferred scope
 
@@ -171,6 +171,6 @@ Production authentication/authorization, durable storage infrastructure, automat
 
 ## 12. Provenance and remaining decisions
 
-This baseline consolidates the architecture discussion of November 26, 2026 and earlier Fieldwork decisions. Source reference: the supplied `Pasted markdown(9).md` (Spatial Explainer HTML), notably its board/world layout (lines 39–76, 468–470, 843–930), reveal vocabulary (118–149), timeline (349–438), camera interpolation (1003 onward) and background renderer (1311 onward). The existing derivative was not available for a fresh code audit, and its licensing and integration status remain unverified.
+This baseline consolidates the architecture discussion of November 26, 2026 and earlier Contextarium decisions. Source reference: the supplied `Pasted markdown(9).md` (Spatial Explainer HTML), notably its board/world layout (lines 39–76, 468–470, 843–930), reveal vocabulary (118–149), timeline (349–438), camera interpolation (1003 onward) and background renderer (1311 onward). The existing derivative was not available for a fresh code audit, and its licensing and integration status remain unverified.
 
 The numbered implementation sequence, suggested message categories, security safeguards and acceptance criteria are proposed engineering choices, not additional user-approved architectural decisions. Exact wire schema, initial component inventory, theme mechanics, push transport, choreography interruption policy and revision/conflict semantics require technical design. No code or existing project files were modified by this specification.

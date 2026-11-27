@@ -5,7 +5,7 @@ import {homedir} from "node:os";
 const source=dirname(fileURLToPath(import.meta.url));
 const root=resolve(source,"../..");
 const dest=process.argv.includes("--install")
-  ? join(process.env.COPILOT_HOME||join(homedir(),".copilot"),"extensions","fieldwork-experiment")
+  ? join(process.env.COPILOT_HOME||join(homedir(),".copilot"),"extensions","contextarium-experiment")
   : join(source,"assets");
 if(process.argv.includes("--install")){
   try{await stat(dest);throw Error("Destination exists; remove or rename it explicitly before reinstalling: "+dest);}

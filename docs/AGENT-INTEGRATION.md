@@ -1,16 +1,16 @@
-# Fieldwork — Agent integration architecture
+# Contextarium — Agent integration architecture
 
 **Version:** 0.1 (proposed integration design)  
 **Date:** 2026-11-26  
 **Status:** Conceptual design and implementation plan; no real agent connected yet.
 
-Companion to [Fieldwork Architecture](Fieldwork-Architecture.md), [Design Guide](DESIGN.md), [Roadmap](ROADMAP.md) and the [runtime contract](../README.md).
+Companion to [Contextarium Architecture](Contextarium-Architecture.md), [Design Guide](DESIGN.md), [Roadmap](ROADMAP.md) and the [runtime contract](../README.md).
 
 ## 1. Intent
 
-Fieldwork is the visual and interactive surface for an external intelligence. An agent can build a workspace, progressively reveal information, react to a person's exploration and proactively add findings. It drives the page through declarative JSON, not by writing HTML, executing JavaScript, simulating browser clicks or manipulating the DOM.
+Contextarium is the visual and interactive surface for an external intelligence. An agent can build a workspace, progressively reveal information, react to a person's exploration and proactively add findings. It drives the page through declarative JSON, not by writing HTML, executing JavaScript, simulating browser clicks or manipulating the DOM.
 
-The browser owns the live workspace. The agent owns its reasoning, domain knowledge, objectives and tool access. A conventional program can occupy the agent's place; Fieldwork itself must not depend on an LLM, any specific model vendor, a backend, or an agent framework.
+The browser owns the live workspace. The agent owns its reasoning, domain knowledge, objectives and tool access. A conventional program can occupy the agent's place; Contextarium itself must not depend on an LLM, any specific model vendor, a backend, or an agent framework.
 
 A standalone HTML file with embedded or static JSON remains a valid deployment.
 
@@ -18,7 +18,7 @@ A standalone HTML file with embedded or static JSON remains a valid deployment.
 
 ```mermaid
 flowchart LR
-  subgraph Client["Browser — Fieldwork"]
+  subgraph Client["Browser — Contextarium"]
     H[Human] <-->|Explore and interact| R[Runtime and camera]
     R <--> W[Live workspace]
     R <--> V[Validated command interface]
@@ -41,7 +41,7 @@ The gateway is a logical role, not a required independent service. In a small de
 
 ### Responsibility split
 
-| Responsibility | Fieldwork runtime | External provider |
+| Responsibility | Contextarium runtime | External provider |
 | --- | --- | --- |
 | Live objects, geometry, hierarchy and behaviors | Authoritative for current session | Reads state and proposes changes |
 | Camera, human control and animation execution | Owns local mechanics and veto | May request focus or choreography |
@@ -52,12 +52,12 @@ The gateway is a logical role, not a required independent service. In a small de
 
 ## 3. The agent in the loop
 
-An agent needs four inputs: a user objective, the relevant domain information, the current workspace (or relevant subset), and a versioned description of Fieldwork's supported capabilities and design rules. It produces a scene or a bounded command batch, not new executable UI code.
+An agent needs four inputs: a user objective, the relevant domain information, the current workspace (or relevant subset), and a versioned description of Contextarium's supported capabilities and design rules. It produces a scene or a bounded command batch, not new executable UI code.
 
 ```mermaid
 sequenceDiagram
     actor H as Human
-    participant F as Fieldwork
+    participant F as Contextarium
     participant G as Provider gateway
     participant A as Agent
     participant T as Domain tools
@@ -135,7 +135,7 @@ This example assumes the sample scene is loaded and its `risk` object exists. It
 
 ### 4.2 Add a thin optional connection adapter
 
-For a complete agent loop, the adapter should bridge the runtime's local interface to a remote session. The current in-browser JavaScript API exposes `fieldwork.getState()`, `fieldwork.loadScene(scene)`, `fieldwork.dispatch(command)`, `fieldwork.batch(commands)` and `fieldwork.events`. These are not remotely accessible APIs.
+For a complete agent loop, the adapter should bridge the runtime's local interface to a remote session. The current in-browser JavaScript API exposes `contextarium.getState()`, `contextarium.loadScene(scene)`, `contextarium.dispatch(command)`, `contextarium.batch(commands)` and `contextarium.events`. These are not remotely accessible APIs.
 
 A first adapter could use HTTP POST for events and snapshots, and server-sent events (SSE) for unsolicited commands. Alternatively, a WebSocket could carry bidirectional messages over one session. Either is viable; neither is ratified. HTTP plus SSE is a provisional starting recommendation because it separates browser-to-provider requests from server-to-browser delivery. A fetch-only demonstration should precede either.
 
@@ -220,4 +220,4 @@ These are proposed safeguards, not production security claims about the current 
 
 The precise transport, session authentication, envelope/schema, event forwarding policy, revision semantics, push reconnect behavior, choreography vocabulary, agent framework/model, and persistent storage remain design decisions. No production agent, remote event adapter, server push, or generalized choreography is claimed to exist today. The current README reports browser tests of embedded behaviors, but real HTTP/file navigation was blocked in the prior test environment.
 
-**Architectural principle:** The agent supplies the intelligence; Fieldwork supplies the spatial mechanics and human-controlled experience. The integration must extend, not replace, the standalone declarative runtime.
+**Architectural principle:** The agent supplies the intelligence; Contextarium supplies the spatial mechanics and human-controlled experience. The integration must extend, not replace, the standalone declarative runtime.

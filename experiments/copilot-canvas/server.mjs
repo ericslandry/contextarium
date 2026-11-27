@@ -15,7 +15,7 @@ async function body(req){
 export async function startCanvas({onPrompt=async()=>{throw Error("No Copilot session; use standalone demo");},allowPrompts=true,assetRoot=new URL("./assets/",here),timeoutMs=12000}={}){
   const assets=Object.fromEntries(await Promise.all(assetNames.map(async name=>[name,await readFile(new URL(name,assetRoot),"utf8")])));
   const bridge=await readFile(new URL("browser.mjs",here),"utf8");
-  // Only alter the served experimental copy. Canonical Fieldwork HTML stays unchanged.
+  // Only alter the served experimental copy. Canonical Contextarium HTML stays unchanged.
   if(!assets["index.html"].includes("</body>"))throw Error("unsupported runtime HTML");
   const html=assets["index.html"].replace("</body>",'<script type="module" src="./browser.mjs"></script></body>')
     .replace("script-src 'unsafe-inline'","script-src 'self' 'unsafe-inline'");

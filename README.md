@@ -1,4 +1,8 @@
-# Fieldwork — Spatial Explainer derivative (prototype)
+# Contextarium
+
+**Give context a place.** A lightweight, declarative spatial workspace runtime for exploring dynamic information, independently or with an external agent.
+
+Prototype derived from Spatial Explainer.
 
 ## Run
 
@@ -15,7 +19,7 @@ Double-click an object (or tab to it and press Enter) to focus it. M opens the m
 
 ## Provenance
 
-This implementation is a separate derivative of the supplied `How This Explainer Works — Spatial Presentation PoC` HTML, not a continuation of the previous Fieldwork runtime. It directly retains the reference's `ease`, `lerpCam` (including geometric scale interpolation and pull-back arc), `drawBg`, canvas sizing and parallax dust, CSS palette, sheet marks and board styling. The base camera fit and screen/world conversion were adapted. The background grid is aligned with the world center. No `will-change: transform` or `translate3d` is used. The reference itself is not changed. Its Google Fonts links, fixed rings/board sequence, audio, timeline, captions and cue index were removed. The reference's styling vocabulary is retained but full SVG cue choreography and path pulses are not exposed as declarative commands in this prototype. Source licensing was not supplied; verify rights before redistributing the derivative.
+This implementation is a separate derivative of the supplied `How This Explainer Works — Spatial Presentation PoC` HTML, not a continuation of the earlier Fieldwork runtime. It directly retains the reference's `ease`, `lerpCam` (including geometric scale interpolation and pull-back arc), `drawBg`, canvas sizing and parallax dust, CSS palette, sheet marks and board styling. The base camera fit and screen/world conversion were adapted. The background grid is aligned with the world center. No `will-change: transform` or `translate3d` is used. The reference itself is not changed. Its Google Fonts links, fixed rings/board sequence, audio, timeline, captions and cue index were removed. The reference's styling vocabulary is retained but full SVG cue choreography and path pulses are not exposed as declarative commands in this prototype. Source licensing was not supplied; verify rights before redistributing the derivative.
 
 ## Contract v1 (new derivative; not compatible with old Fieldwork v2)
 
@@ -42,7 +46,7 @@ Trusted component types: `board`, `text`, `metric`, `list`, `chart`, `table`, `c
 | camera.set | x, y, s, optional durationMs |
 | data.fetch | source |
 
-`fieldwork.getState()` returns a snapshot. `fieldwork.loadScene(scene)` validates and replaces the scene. `await fieldwork.dispatch(command)` handles an individual command or data fetch. `fieldwork.batch(commands)` validates all mutations on a cloned scene before committing, then requests camera actions. Camera requests are independently subject to human veto; an accepted scene mutation does not guarantee camera movement. Fetch commands are not permitted directly in mutation batches; registered behaviours may request a registered source. `fieldwork.events` is an EventTarget; notifications include `scene.ready`, `scene.changed`, `widget.action`, `camera.enter`, `camera.leave`, `camera.arrived` (animated arrival), `camera.interrupted` (suppressed request), `data.loaded`. This is an in-browser JS interface, not a remotely exposed API or authentication boundary.
+`contextarium.getState()` returns a snapshot. `contextarium.loadScene(scene)` validates and replaces the scene. `await contextarium.dispatch(command)` handles an individual command or data fetch. `contextarium.batch(commands)` validates all mutations on a cloned scene before committing, then requests camera actions. Camera requests are independently subject to human veto; an accepted scene mutation does not guarantee camera movement. Fetch commands are not permitted directly in mutation batches; registered behaviours may request a registered source. `contextarium.events` is an EventTarget; notifications include `scene.ready`, `scene.changed`, `widget.action`, `camera.enter`, `camera.leave`, `camera.arrived` (animated arrival), `camera.interrupted` (suppressed request), `data.loaded`. This is an in-browser JS interface, not a remotely exposed API or authentication boundary. `window.contextarium` is the canonical API; `window.fieldwork` remains a compatibility alias to the same object. The JSON v1 contract is unchanged.
 
 ### Behaviours and sources
 

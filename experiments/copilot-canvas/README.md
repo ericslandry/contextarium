@@ -1,12 +1,12 @@
-# Fieldwork × Copilot Canvas — disposable experiment
+# Contextarium × Copilot Canvas — disposable experiment
 
-This directory implements an experimental integration without modifying the canonical Fieldwork HTML, fixtures, docs or architecture. The installer copies them into an isolated extension; the server adds a bridge only to the served experimental HTML. Delete this directory and the installed extension to remove the experiment. No root auto-discovery extension is installed by cloning the repository.
+This directory implements an experimental integration without modifying the canonical Contextarium HTML, fixtures, docs or architecture. The installer copies them into an isolated extension; the server adds a bridge only to the served experimental HTML. Delete this directory and the installed extension to remove the experiment. No root auto-discovery extension is installed by cloning the repository.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  U[Human] --> B[Browser-owned Fieldwork]
+  U[Human] --> B[Browser-owned Contextarium]
   B <-->|SSE commands / HTTP events and results| S[Loopback server per canvas]
   S <-->|Canvas actions / queued session prompt| C[Copilot SDK]
   C <--> A[Copilot agent]
@@ -25,7 +25,7 @@ node --test test.mjs
 node demo.mjs
 ```
 
-Open the printed loopback URL. Confirm existing Fieldwork appears, click an object and then Ask Copilot about selection: the deterministic provider adds a card. After connecting, a timer sends an independent update. Pan or zoom, and confirm the original runtime remains responsive. Stop with Ctrl+C. The test harness checks broker, localhost transport, and a simulated browser acknowledgement; it does not replace a real browser or Copilot test.
+Open the printed loopback URL. Confirm existing Contextarium appears, click an object and then Ask Copilot about selection: the deterministic provider adds a card. After connecting, a timer sends an independent update. Pan or zoom, and confirm the original runtime remains responsive. Stop with Ctrl+C. The test harness checks broker, localhost transport, and a simulated browser acknowledgement; it does not replace a real browser or Copilot test.
 
 ## Install into Copilot (opt-in user scope)
 
@@ -33,7 +33,9 @@ Open the printed loopback URL. Confirm existing Fieldwork appears, click an obje
 node prepare.mjs --install
 ```
 
-This copies the experiment and source assets into the local Copilot home extensions/fieldwork-experiment folder, refusing to overwrite an existing installation. It intentionally does not modify .github/extensions. The SDK is expected to be supplied by the installed Copilot host; do not install an arbitrary SDK version. In a local Copilot app session, consult the installed extension guide and canvas SDK types (extensions_manage guide), reload extensions, inspect fieldwork-experiment, then ask the agent to open canvas ID fieldwork-experiment with instance ID fieldwork-demo. Extension loading, SDK import and the host's iframe policies must be tested locally; the interface is experimental. If the installed host uses another extension layout or API, adapt only extension.mjs and prepare.mjs. No Copilot configuration is changed automatically.
+This copies the experiment and source assets into the local Copilot home extensions/contextarium-experiment folder, refusing to overwrite an existing installation. It intentionally does not modify .github/extensions. The SDK is expected to be supplied by the installed Copilot host; do not install an arbitrary SDK version. In a local Copilot app session, consult the installed extension guide and canvas SDK types (extensions_manage guide), reload extensions, inspect contextarium-experiment, then ask the agent to open canvas ID contextarium-experiment with instance ID contextarium-demo. Extension loading, SDK import and the host's iframe policies must be tested locally; the interface is experimental. If the installed host uses another extension layout or API, adapt only extension.mjs and prepare.mjs. No Copilot configuration is changed automatically.
+
+If the earlier Fieldwork experiment was installed, close its canvas and remove or disable that old extension separately (`fieldwork-experiment`) before installing the renamed `contextarium-experiment`. The installer does not overwrite or remove the previous installation.
 
 ## Validation matrix
 

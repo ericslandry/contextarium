@@ -1,6 +1,6 @@
-// Experimental adapter; the original Fieldwork runtime is unmodified.
-const fw=window.fieldwork;
-if(!fw)throw Error("Fieldwork runtime missing");
+// Experimental adapter; the original Contextarium runtime is unmodified.
+const fw=window.contextarium;
+if(!fw)throw Error("Contextarium runtime missing");
 const client=crypto.randomUUID?.()??Array.from(crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,"0")).join("");
 const post=async(path,data)=>{
   const r=await fetch("./"+path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({client,...data})});
