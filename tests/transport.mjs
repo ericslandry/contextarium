@@ -1,8 +1,8 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {createBroker} from "./broker.mjs";
-import {startCanvas} from "./server.mjs";
-import {makeActions} from "./actions.mjs";
+import {createBroker} from "../connect/broker.mjs";
+import {startCanvas} from "../connect/server.mjs";
+import {makeActions} from "../connect/actions.mjs";
 test("broker correlates replies and rejects stale clients",async()=>{
  const b=createBroker({timeoutMs:100});let message;const drop=b.attach("client-a",m=>message=m);
  const result=b.call("state");assert.equal(b.ack("client-b",{id:message.id,ok:true}),false);
@@ -14,16 +14,17 @@ test("broker reports rejection and timeout without claiming success",async()=>{
  const p=b.call("batch");b.ack("client",{id:m.id,ok:false,error:"invalid"});await assert.rejects(p,/invalid/);
  await assert.rejects(b.call("state"),/timed out/);b.close();
 });
-test("loopback server serves experimental HTML and round trips SSE command / HTTP ack",async()=>{
+test("loopback server serves the connected workspace and round trips SSE / HTTP ack",async()=>{
  const instance=await startCanvas({timeoutMs:1000});const client="test-client", origin=new URL(instance.url).origin;
  let reader;
  try{
-   const html=await (await fetch(instance.url)).text();assert.match(html,/src="\.\/browser\.mjs"/);
+   const html=await (await fetch(instance.url)).text();assert.match(html,/src="\.\/connect\/browser\.mjs" data-assistant="provider" data-request-event="ask-provider"/);
    assert.match(html,/frame-src 'self'/);
    const preview=await (await fetch(instance.url+"layout-preview")).text();
    assert.match(preview,/container-type: size/);
-   assert.doesNotMatch(preview,/src="\.\/browser\.mjs"/);
-   assert.match((await fetch(instance.url+"layout-browser.mjs")).headers.get("content-type"),/javascript/);
+   assert.doesNotMatch(preview,/src="\.\/connect\/browser\.mjs"/);
+   assert.match((await fetch(instance.url+"core/layout-browser.mjs")).headers.get("content-type"),/javascript/);
+   assert.equal((await fetch(instance.url+"core/contracts.mjs")).status,404);
    assert.equal((await fetch(origin+"/")).status,404);
    const events=await fetch(instance.url+"events?client="+client);reader=events.body.getReader();
    const decoder=new TextDecoder();let pending="";

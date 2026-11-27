@@ -1,11 +1,17 @@
-# Implementation roadmap
+# Contextarium roadmap
 
-Baseline: recovered Spatial Explainer derivative and architecture v0.1. No claim of production readiness.
+## Current baseline
 
-1. Verify the recovered runtime and repeat its browser checks under actual HTTP hosting.
-2. Formalize versioned JSON schema, component catalog, design guide and error/query/snapshot semantics.
-3. Build a deterministic local test provider for event-driven HTTP and optional unsolicited push; preserve standalone mode.
-4. Generalize interruptible choreography, reveals and SVG primitives.
-5. Validate a second independently composed workspace against the same runtime and style guide.
+- Native Copilot marketplace packaging, Canvas discovery and lifecycle, with standalone browser execution from the same runtime.
+- Scene v1, validated mutations, state inspection, semantic zoom and human camera precedence.
+- Connected HTTP/SSE transport, explicit queued requests, deterministic reactive and timed providers, and browser-measured layout feedback.
+- Headless regressions and recorded desktop validation. See the [validation history](VALIDATION-HISTORY.md).
 
-Deferred: production identity, persistence, synchronization, collaboration, real AI integration, automatic intelligent layout, general visual authoring. Reference licensing must be verified before redistribution.
+## Next work
+
+- Verify derivative licensing before redistribution.
+- Expand browser and accessibility checks for keyboard, focused content, screen readers and narrow panels.
+- Exercise connection recovery, long sessions and resource limits with larger workspaces and additional deterministic fixtures.
+- Evolve the versioned contracts only as concrete provider and authoring needs arise.
+
+Durable synchronization, remote hosting and authorization, multi-user collaboration, general visual editing, automatic layout, and generalized choreography are deferred.

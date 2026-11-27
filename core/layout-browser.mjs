@@ -193,7 +193,7 @@ async function measurePreviewSamples(frame, scene, samples) {
   return results;
 }
 
-export async function validateLayout(scene, samples) {
+export async function validateLayout(scene, samples, previewURL) {
   if (!samples?.length) {
     await settled(window);
     return [layoutSample(window, window.contextarium.getState(), 0)];
@@ -211,7 +211,7 @@ export async function validateLayout(scene, samples) {
     frame.onload = () => { clearTimeout(timer); resolve(); };
     frame.onerror = () => { clearTimeout(timer); reject(new Error("Layout preview failed to load")); };
   });
-  frame.src = "./layout-preview";
+  frame.src = previewURL;
   document.body.append(frame);
   try {
     await loaded;

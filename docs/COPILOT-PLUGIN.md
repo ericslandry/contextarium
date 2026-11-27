@@ -1,20 +1,20 @@
 # Contextarium for GitHub Copilot Canvas
 
-Contextarium is a single-plugin marketplace. Its catalog is in `.github/plugin/marketplace.json` and its package manifest is the root `plugin.json`. The catalog installs the repository root as the package, including the canonical runtime and fixtures. The Copilot-specific manifest uses the legacy `extensions` path field, and the native entry point loads the existing Canvas experiment. The installed package resolves its assets relative to itself. It needs no source checkout, build step, or separate installer.
+Contextarium is a single-plugin marketplace. Its catalog is in `.github/plugin/marketplace.json` and its package manifest is the root `plugin.json`. The catalog installs the repository root as the package, including the canonical runtime and fixtures. The Copilot-specific manifest uses the legacy `extensions` path field, and the native entry point uses the shared connection adapter. The installed package resolves its assets relative to itself. It needs no source checkout, build step, or separate installer.
 
 ## Install in GitHub Copilot desktop
 
 1. Open **Customize → Add extension → Manage marketplaces**. Builds with a marketplace picker can also expose marketplace settings next to the picker.
-2. While the marketplace is on the packaging branch, add `ericslandry/contextarium#copilot-plugin`. Once the packaging is on the default branch, use `ericslandry/contextarium` to follow that branch.
+2. Add `ericslandry/contextarium` to follow the default branch.
 3. Select the **contextarium** marketplace, find **contextarium**, and select **Install**.
-4. Open **Customize → Installed**, find **Contextarium (experiment)** under **Canvas**, and choose the entry labelled **Plugin: contextarium:contextarium**. Select **New session**, then pick a repository or **No repository**. This opens the Canvas without a chat prompt. The `contextarium-experiment` Canvas exposes `authoring_guide`, `inspect_workspace`, `validate_layout`, and the scene actions.
+4. Open **Customize → Installed**, find **Contextarium** under **Canvas**, and choose the entry labelled **Plugin: contextarium:contextarium**. Select **New session**, then pick a repository or **No repository**. This opens the Canvas without a chat prompt. The `contextarium-experiment` Canvas exposes `authoring_guide`, `inspect_workspace`, `validate_layout`, and the scene actions.
 
 The plugin row on **Customize → Installed** has an enable switch and an actions menu for **Update** and **Uninstall**. An existing session may retain its Canvas until you open a fresh session.
 
 ## Manage with Copilot CLI
 
 ```sh
-copilot plugin marketplace add 'ericslandry/contextarium#copilot-plugin'
+copilot plugin marketplace add ericslandry/contextarium
 copilot plugin marketplace browse contextarium
 copilot plugin install contextarium@contextarium
 copilot plugin list
@@ -26,7 +26,7 @@ copilot plugin uninstall contextarium@contextarium
 copilot plugin marketplace remove contextarium
 ```
 
-Use a fresh session when checking changes to discovery or enablement. If you previously used the experimental project or user extension, validate in an unrelated repository first. Both entry points expose the same Canvas ID.
+Use a fresh session when checking changes to discovery or enablement. An older project or user extension can still expose the same Canvas ID. Select the plugin-supplied entry or verify in a repository without the old extension.
 
 ## Private repositories and compatibility
 

@@ -1,4 +1,4 @@
-# Contextarium Canvas authoring contract (experimental)
+# Contextarium authoring guide
 
 Read the runtime contract and design guide returned by authoring_guide. Inspect the live workspace before every batch. The browser is authoritative; the provider does not maintain a synchronized scene. Use the returned revision and bridgeEpoch as expectedRevision and expectedEpoch. Reinspect after rejection or timeout; do not blindly retry. A successful mutation is not a guarantee that camera motion occurred or finished. Inspect follow and cameraVetoes; recent_events includes arrival and interruption.
 
@@ -6,7 +6,7 @@ Use trusted types board, text, metric, list, chart, table and controls. Explicit
 
 ## Size and validate before presenting a scene
 
-`authoring_guide` returns the versioned `layoutContract` with minimum and recommended dimensions, content capacity, padding and typography ranges. Start with recommended sizes, and budget for wrapping and every semantic variant. For example, a metric starts at 320 × 220 world units and 480 × 300 is recommended for a short label, title and value. Put explanation in a separate text card. The experimental renderer fits padding and typography within fixed limits. It keeps the authored position and size, so oversized content still needs a composition change.
+`authoring_guide` returns the versioned `layoutContract` with minimum and recommended dimensions, content capacity, padding and typography ranges. Start with recommended sizes, and budget for wrapping and every semantic variant. For example, a metric starts at 320 × 220 world units and 480 × 300 is recommended for a short label, title and value. Put explanation in a separate text card. The connected renderer fits padding and typography within fixed limits. It keeps the authored position and size, so oversized content still needs a composition change.
 
 Reserve at least the top 200 world units of each board for its heading. The measured zone can be deeper when labels, headings or descriptions wrap. Put children below the depth reported as `minimumBoardLocalY` and keep them within the board. Parent containment is intentional. Intersections between unrelated rendered objects are reported as overlaps.
 
@@ -37,6 +37,6 @@ Example apply_commands input (replace revision/epoch with actual values):
 }
 ```
 
-The browser records camera events. The default is an explicit Ask Copilot button or a declared button event named ask-copilot. An opt-in experimental checkbox also submits a bounded prompt when a declared camera.enter event follows a recent trusted wheel or zoom-key gesture while Follow is off. The gesture is consumed once, mutation/reset clears it, and the server rate-limits requests. This is a conservative heuristic, not reliable gesture provenance; validate it in Copilot before relying on it. There is no model API key, agent framework dependency or generic external tool execution in the browser.
+The browser records camera events. The explicit request button uses the host provider callback. Authored ask-copilot button events request work in Copilot, and ask-provider requests work in the deterministic demo. The manual-zoom heuristic is optional and disabled by default. It consumes a recent trusted wheel or zoom-key gesture when a declared camera.enter fires while Follow is off. The server rate-limits provider requests.
 
 Try asking Copilot to build a three-board fictional service health investigation with an overview, findings, and remediation priorities. Use synthetic data only. Ask it to add new findings proactively while you pan; it should use apply_commands without camera.focus unless asked. Verify the original page remains usable in standalone mode.
