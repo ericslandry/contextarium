@@ -1,5 +1,7 @@
 # Contextarium
 
+For GitHub Copilot Canvas, see [install and manage the Contextarium plugin](docs/COPILOT-PLUGIN.md).
+
 **Give context a place.** A lightweight, declarative spatial workspace runtime for exploring dynamic information, independently or with an external agent.
 
 Prototype derived from Spatial Explainer.

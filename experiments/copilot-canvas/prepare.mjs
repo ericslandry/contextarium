@@ -11,7 +11,7 @@ if(process.argv.includes("--install")){
   try{await stat(dest);throw Error("Destination exists; remove or rename it explicitly before reinstalling: "+dest);}
   catch(e){if(e.code!=="ENOENT")throw e;}
   await mkdir(dest,{recursive:true});
-  for(const f of ["extension.mjs","server.mjs","broker.mjs","browser.mjs","actions.mjs","layout-browser.mjs","layout-contract.mjs","AUTHORING.md","README.md"])await copyFile(join(source,f),join(dest,f));
+  for(const f of ["extension.mjs","server.mjs","broker.mjs","browser.mjs","actions.mjs","assets.mjs","layout-browser.mjs","layout-contract.mjs","AUTHORING.md","README.md"])await copyFile(join(source,f),join(dest,f));
 }
 const assets=process.argv.includes("--install")?join(dest,"assets"):dest;
 await mkdir(assets,{recursive:true});

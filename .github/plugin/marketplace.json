@@ -1,0 +1,13 @@
+{
+  "name": "contextarium",
+  "owner": {
+    "name": "ericslandry"
+  },
+  "plugins": [
+    {
+      "name": "contextarium",
+      "description": "Open and compose Contextarium spatial workspaces in GitHub Copilot Canvas.",
+      "source": "."
+    }
+  ]
+}

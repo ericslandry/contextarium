@@ -3,6 +3,7 @@ import {randomBytes} from "node:crypto";
 import {readFile} from "node:fs/promises";
 import {createBroker} from "./broker.mjs";
 import {withComponentFitting} from "./layout-contract.mjs";
+import {resolveAssetRoot} from "./assets.mjs";
 
 const here=new URL("./",import.meta.url);
 const assetNames=["index.html","scene.json","scene-http.json","risk-details.json","risk-click.json"];
@@ -13,7 +14,8 @@ async function body(req){
   let size=0,parts=[];for await(const chunk of req){size+=chunk.length;if(size>1024*1024)throw Error("request too large");parts.push(chunk);}
   return JSON.parse(Buffer.concat(parts).toString("utf8"));
 }
-export async function startCanvas({onPrompt=async()=>{throw Error("No Copilot session; use standalone demo");},allowPrompts=true,assetRoot=new URL("./assets/",here),timeoutMs=12000}={}){
+export async function startCanvas({onPrompt=async()=>{throw Error("No Copilot session; use standalone demo");},allowPrompts=true,assetRoot,timeoutMs=12000}={}){
+  assetRoot ??= await resolveAssetRoot();
   const assets=Object.fromEntries(await Promise.all(assetNames.map(async name=>[name,await readFile(new URL(name,assetRoot),"utf8")])));
   const modules=Object.fromEntries(await Promise.all(
     ["browser.mjs","layout-browser.mjs","layout-contract.mjs"].map(async name=>[name,await readFile(new URL(name,here),"utf8")])
