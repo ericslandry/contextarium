@@ -5,7 +5,7 @@
 
 ## Decisions
 
-- Keep Dynamic Workflows as the first candidate for background composition. The installed host ran and cancelled deterministic work and delivered its structured result to a visible Canvas. Adoption still depends on proving composition-only permissions, live model concurrency, and acceptable usage and host behavior.
+- Keep Dynamic Workflows as the first candidate for background composition. The installed host ran and cancelled deterministic work and delivered its structured result to a visible Canvas. The Fusion run demonstrated live foreground and background overlap in one session. Adoption still depends on proving composition-only permissions and collecting representative latency, usage, and host-behavior evidence.
 - Keep opaque, script-free iframe compositions as the rendering prototype. The WebView rendered rich HTML and SVG. The measured zoom cadence calls for limiting live frames and profiling culling before setting release budgets. Complete structural content validation and the remaining isolation cases before admitting generated markup.
 - Keep one session-owned workspace writer, with workspace revision, conversation freshness, and camera epoch checked independently. The deterministic probe passed these checks and demonstrated full snapshot recovery.
 
@@ -14,8 +14,8 @@
 | Gate | Status | Evidence and limits |
 | --- | --- | --- |
 | 0. Environment and install | Pass for the zero-model probe | GitHub Copilot desktop **1.5.0**, local Node **24.22.3**, standalone Edge **158.0.4370.45**. The installed CLI package reports **@github/copilot 1.0.115-7** and the bundled SDK declaration specifies protocol **4**. The exact SDK package version and the WebView runtime selected by the host were not independently confirmed. The native local marketplace exposed the probe plugin, extension, and Canvas. |
-| 1. Foreground observation | Partial | The native observer registered in separate session processes and recorded workflow and shutdown events. The deterministic observer test exercised session filtering, deduplication, redaction, worker filtering, and unsubscribe. Native user and assistant message ordering, turn completion, replay, and cross-session isolation of real conversation events remain unverified. |
-| 2. Background runtime | Pass for deterministic execution. Live model test blocked. | Three native completions took **1,522–1,541 ms**. Three cancellations took **99–127 ms** and returned no marker. Native activity showed the completed and cancelled runs. The deterministic test made **zero model calls**. The approved live test was blocked at model availability. Foreground concurrency, effective tool grants, usage, and workflow retention remain unverified. |
+| 1. Foreground observation | Partial | The native observer registered in separate session processes and recorded workflow and shutdown events. The deterministic observer test exercised session filtering, deduplication, redaction, worker filtering, and unsubscribe. The isolated baseline showed ordered user message, assistant turn start, assistant message and turn end. During concurrency the listener received interleaved events, so first-text attribution needs correlation by turn or message ID. Native replay and cross-session isolation of real conversation events remain unverified. |
+| 2. Background runtime | Pass for deterministic execution and one Fusion overlap sample. | Three deterministic completions took **1,522–1,541 ms**. Three deterministic cancellations took **99–127 ms**. The live run completed two foreground turns and one background composition. The concurrent foreground request and worker overlapped for **2,019 ms**. Effective tool grants and workflow retention remain unverified. |
 | 3. State and rendering | Pass for the tested paths | Four deterministic state/transport tests passed, covering obsolete jobs, session fencing, atomic rejection, duplicate and reordered snapshots, import and reset, camera takeover, disconnect, reconnect, and teardown. In a fresh native **No repository** session, the completed workflow published revision 1, the trusted WebView shell displayed it, and the renderer acknowledged it **157 ms** after publication. The cancelled run produced no result. Foreground progress was simulated in the standalone test. |
 | 4. Isolation and spatial quality | Partial | Styled HTML and tables, SVG paths, gradients and masks, and CSS animation rendered in standalone Edge and native WebView. The fixtures used opaque, script-free frames and a restrictive CSP. The tested local request sink received zero requests. Performance and the remaining security and accessibility cases are detailed below. |
 | 5. Skill and lifecycle | Partial | The disposable skill, extension and Canvas were discoverable in Installed. A fresh no-repository session loaded the local source changes, and a refreshed Installed view showed **0.0.3**. Per-plugin **Update** and **Uninstall** both returned “Plugin is not installed” while the UI listed it. **Remove and uninstall** on the disposable marketplace succeeded, and Installed returned no matching entries. The workflow-local agent configuration rejects the `skills` field. Other background skill-loading paths remain unverified. |
@@ -57,4 +57,22 @@ The installed workflow validator accepted an explicit workflow-local agent with 
 
 A separate SDK runtime using isolated `empty` mode connected with protocol 4 and reported unauthenticated. The check used no new credentials and did not try to transfer the desktop sign-in. Evidence is in `check-live-prerequisites.mjs` and `live-evidence.jsonl` in the disposable validation directory. The desktop marketplace and its installed components were removed and confirmed absent.
 
-The live comparison can resume when a fresh Copilot desktop session has an available model. Its approved budget remains one baseline foreground call, one background composition call, and one concurrent foreground call. Record foreground first-text and completion times, actual worker overlap, available usage counters, and observable tool exposure. The skill preload behavior needs a supported path of its own.
+The initial preflight was followed by the Fusion comparison below. The skill preload behavior needs a supported path of its own.
+
+## Live comparison with Copilot Fusion
+
+A fresh native **No repository** session showed **Copilot Fusion · Standard**. The operator activated the disposable Canvas comparison once. It sent one baseline foreground request, started one workflow worker, and sent one concurrent foreground request. Both foreground replies matched their distinct test markers. The completed worker returned the expected structured marker. Three model-usage events were observed, all for **MAI Code 2 Flash**. Copilot showed the two foreground replies and one completed background workflow in its activity panel. The approved three-call budget was used in this run.
+
+| Observation | Measured result |
+| --- | ---: |
+| Baseline foreground, first observed text | 2,433 ms |
+| Baseline foreground, submission to completed response | 2,453 ms |
+| Concurrent foreground, submission to completed response | 2,109 ms |
+| Concurrent foreground request overlapping the worker's recorded interval | 2,019 ms |
+| Background workflow, runtime start to completion | 2,162 ms |
+| Worker active time reported by the runtime | 1,994 ms |
+| Worker usage reported by the runtime | 0.01017 AI credits |
+
+The foreground completion times are tied to the two `sendAndWait` results and validated markers. The concurrent session listener received two interleaved sets of turn events. It did not preserve message and turn IDs, so its first observed text delta cannot be assigned confidently to the foreground turn. The 344 ms difference in completion times is one baseline and one concurrent sample. It does not establish a latency impact.
+
+The worker ran with `infer: false` and `tools: []`. The session listener reported zero tool starts during the observed turns. The experiment did not enumerate the worker's effective tool catalog or exercise a denial, so the composition-only boundary remains unverified. No live cancellation was attempted within this three-call comparison. The local evidence is in `live-evidence.jsonl`. The disposable marketplace was removed after the run and Installed showed no matching components.
