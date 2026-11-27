@@ -39,7 +39,7 @@ The package targets the local Copilot Canvas host. The manifest uses Copilot-spe
 - Copilot added the branch-qualified marketplace from the private, user-owned GitHub repository while signed in. Native installation listed the plugin, extension, and Canvas separately from the repository-scoped development Canvas.
 - The remote install populated Copilot's installed-plugin cache with its own copy of the canonical runtime. The cache was a directory, and the runtime blob matched the repository's canonical HTML. The install ran without the experiment's prepared assets.
 - The Canvas rendered and connected in two fresh local sessions, one with **No repository** and one using an unrelated empty Git repository. The unrelated session had no user messages. It opened before any repository trust approval.
-- The native update command checked the initial 0.1.0 install. Disabling the plugin disabled its Canvas launcher. Uninstall removed the installed package, and reinstall restored the plugin Canvas. Its catalog entry can remain visible briefly after uninstall.
+- The native **Update** action upgraded version 0.1.0 to 0.1.1 from the private marketplace. The updated Canvas rendered in another fresh unrelated-repository session. Disabling the plugin disabled its Canvas launcher. Uninstall removed the installed package, and reinstall restored the plugin Canvas. The app can retain a disabled catalog row after uninstall.
 - Local-path marketplace installs on CLI 1.0.115-7 use a live folder. Use the GitHub marketplace source when you want an installation independent of a checkout. No Copilot chat prompts were submitted.
 
 ## GitHub references
