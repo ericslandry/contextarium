@@ -1,10 +1,10 @@
 # Contextarium redesign
 
-**Status:** Agreed product direction; proposed target architecture pending technical feasibility validation.  
+**Status:** Agreed product direction, revised trust and rendering model (2026-11-27); bounded implementation pending integrated validation.  
 **Baseline:** Contextarium v0.2.0, commit [84c0a12](https://github.com/ericslandry/contextarium/commit/84c0a12486def4dd7b9e10032becce9fcef49dfd).  
 **Scope:** Clean redesign, not an incremental extension of the existing component catalog.
 
-This document records the decisions reached during product discovery and identifies the remaining technical questions. It describes the intended future product, not the current implementation. The existing architecture, contracts and development instructions remain applicable to the shipping implementation until the redesign is adopted.
+This document records the decisions reached during product discovery and identifies the remaining technical questions. It describes the intended future product, not the current implementation. The existing architecture, contracts and development instructions remain applicable to the shipping implementation until the redesign is adopted. For the redesign, this document supersedes earlier restrictions on executable content, per-composition isolation and worker permissions. See the [historical feasibility baseline](https://github.com/ericslandry/contextarium/blob/79331b0c949308e74255309ece9548a6f5cc4d38/docs/REDESIGN-FEASIBILITY.md) and [recorded validation](https://github.com/ericslandry/contextarium/blob/fd1e2de83abd9dbe5a6fd8a1cc84beeca1e0c69e/docs/REDESIGN-VALIDATION.md); those observations remain valid, but their recommendations must be interpreted against the revised trust model.
 
 ## 1. Product vision
 
@@ -20,7 +20,7 @@ The subject and the evolving understanding should determine the visual language.
 |---|---|
 | Evolution | The agent continuously curates the workspace as the conversation develops. |
 | Composition | Agents author and modify the workspace; the human does not directly edit its contents. |
-| Human interaction | Navigation, zoom, selection and conversation are sufficient for the initial product. |
+| Human interaction | Navigation, zoom, selection and conversation remain core; agent-authored interactive visualizations, simulations and custom controls are supported without requiring a native widget for each interaction. |
 | Navigation as intent | Passive exploration is a low-weight contextual signal, not an instruction or an automatic reason to invoke an agent. Explicit requests take precedence. |
 | Attention | The agent may actively guide the camera when useful. The human can immediately take control. |
 | Navigation recovery | Back and forward restore prior viewpoints; breadcrumbs show conceptual ancestry where available; overview restores broader context. Navigation history is not content undo. |
@@ -50,13 +50,28 @@ Replace the widget catalog as the boundary of expression with a hybrid spatial c
 
 - The agent owns visual expression and determines what to represent and how to represent it.
 - Contextarium owns spatial placement, identity, navigation, presentation mechanics and the controlled workspace interface.
-- Rich compositions may contain independently authored HTML, CSS and SVG. Simple native elements remain available when convenient. Both should feel like parts of one spatial environment.
-- By default, the engine treats the internal visual content as opaque. It need not understand the subject matter or every visual element.
+- Rich compositions may contain independently authored HTML, CSS, SVG and JavaScript in a shared browser document. Agent-authored interactive behavior and animation are supported. Simple native elements remain available when convenient. Both should feel like parts of one spatial environment.
+- By default, the engine treats the internal visual content as semantically opaque (not as an isolated browser security principal). It need not understand the subject matter or every visual element.
 - Optional semantic anchors may expose meaningful regions or entities for selection, reference and navigation. Sophisticated internal manipulation and anchor semantics can wait for a concrete need.
 - A minimal spatial contract is expected to cover stable identity, geometry and scale, content, visibility/opacity and relationships as needed. Exact fields, formats and protocols are deliberately not specified yet.
-- No agent-supplied executable JavaScript in this iteration. Trusted runtime code remains responsible for spatial behavior and integration. Allow future consideration of sandboxed programmable compositions without requiring them now.
+- Contextarium owns common spatial behavior and integration. Agent-authored JavaScript can implement composition-specific interactions, simulations and motion.
+- Use direct browser-native rendering in a shared document as the leading approach, following the Spatial Explainer reference. No mandatory iframe, per-composition sandbox, restrictive visual schema or sanitizer imposed solely to protect one trusted composition from another. Optional isolation, native elements or other representations may be chosen for functional or performance reasons.
+- Define a small composition lifecycle for mounting, updating and removing authored content, with guidance for CSS scoping, event listeners, timers, animation cleanup and avoiding conflicts with shared navigation. These are engineering conventions, not security isolation guarantees.
 
-Rich content must be isolated from the workspace, privileged host and other compositions. Non-executable markup is not inherently safe: HTML, CSS and SVG still require explicit handling of active features, resource loading, external references, UI spoofing and resource consumption. Select and test the actual isolation mechanism before fixing the content contract. Security should constrain capabilities and trust boundaries rather than unnecessarily limiting visual expression.
+#### Accepted trust model (2026-11-27)
+
+Contextarium targets local, single-user, trusted Copilot authoring. The user explicitly accepts the same trust level for the spatial agent as for the primary Copilot agent, including inherited session tool permissions. The user also trusts Copilot-generated visual content to the same extent as Copilot-generated executable code, and explicitly authorizes agent-authored JavaScript. These decisions supersede earlier requirements for composition-only worker permissions and script-free isolated frames.
+
+| Risk or boundary | Treatment |
+|---|---|
+| Accidental CSS interference, expensive rendering or sluggish navigation | Product quality concerns, not security gates. Optimize when evidence warrants it. |
+| Generated executable content within the shared document | Accepted for trusted Copilot-generated content; do not require a sandbox per composition. |
+| Existing Copilot prompt injection, tool grants and agent actions | Rely on existing Copilot controls rather than introducing a second, more restrictive worker permission regime. |
+| Browser-to-host privileges | Preserve the Copilot application's permission enforcement. Do not add an unrestricted bridge to shell, filesystem, credentials, privileged RPC or tool execution. Browser JavaScript is not automatically subject to agent tool permissions; document what the native host actually exposes. |
+| Session routing and workspace integrity | Retain ordinary session ownership, revision and lifecycle checks. These serve correct behavior as well as basic isolation. |
+| Third-party imported executable content and external resources | No separate acceptance decision has been made for untrusted third-party imports or unrestricted external data transfer. Document the executable nature of imports; scope the prototype to trusted authored/imported material. Do not infer that Copilot mediates browser network requests or that every external asset is trusted. |
+
+Shared-document JavaScript can access and modify the renderer DOM, including other compositions and controls, and may make requests permitted by the browser/host. CSS scoping and composition lifecycle are not security boundaries. Accepting trusted code does not prove that the Canvas WebView cannot access privileged host APIs. Verify that capability boundary narrowly, without imposing additional isolation unless evidence shows a new privilege bypass that cannot otherwise be addressed. No effort to defend against deliberately malicious trusted composition code or guarantee resource isolation is required.
 
 ### 3.2 Spatial navigation and narrative
 
@@ -92,7 +107,7 @@ The conversational agent develops understanding with the human. The spatial agen
 
 The spatial agent should preserve useful in-flight work where possible and adapt or discard work that becomes irrelevant as the conversation advances. Avoid processing every event as a new model invocation. Passive navigation alone is not an automatic prompt trigger. Coalesce updates and prevent late results from overwriting newer understanding or interrupting human navigation.
 
-A Copilot child session, independent SDK session or other supported background mechanism is a technical hypothesis, not a verified feature of the installed Canvas host. The exact context transfer, scheduling, authentication, model selection and cancellation mechanism remain open. If the proposed background mechanism is infeasible, report the constraint and assess alternatives against the responsiveness objective rather than silently substituting a blocking queued-prompt design.
+Native Copilot Dynamic Workflows are the provisional background mechanism: live foreground/background overlap and separate native Canvas publication have been observed on desktop 1.5.0. The integrated model-to-Canvas path and event attribution remain unverified. An independent SDK runtime failed authentication in the tested configuration and is a fallback only if native workflows prove unsuitable. Inherited foreground permissions are acceptable; preserve Copilot's existing enforcement. If the proposed background mechanism is infeasible, report the constraint and assess alternatives against the responsiveness objective rather than silently substituting a blocking queued-prompt design.
 
 ### 3.5 Bundled agent skill
 
@@ -106,12 +121,11 @@ The existing v1 authoring guide and tool sequence are useful evidence, but the n
 
 ## 4. Scope and deferred capabilities
 
-Initial scope includes the transient spatial workspace, rich non-executable visual compositions, simple native elements, ongoing agent composition, camera guidance and recovery, contextual awareness, adaptive updates and manual import/export. Asynchronous composition is a major objective whose feasibility must be established early.
+Initial scope includes the transient spatial workspace, rich executable visual compositions (HTML/CSS/SVG/JavaScript), simple native elements, ongoing agent composition, camera guidance and recovery, contextual awareness, adaptive updates and manual import/export. Asynchronous composition is a major objective whose feasibility must be established early.
 
 Deliberately deferred:
 
-- Agent-authored executable JavaScript, simulations and programmable interactive applications.
-- General content-level filtering, parameter manipulation and advanced exploratory interactions.
+- A generalized native simulation, filtering, parameter-manipulation or programmable widget framework. Agent-authored JavaScript may implement these capabilities directly; do not defer executable compositions.
 - Human direct editing or collaborative visual authoring.
 - Formal historical layering, undo of the knowledge state, durable persistence, cross-session synchronization and interconnected knowledge spaces.
 - Sophisticated semantic anchors where no concrete need has been established.
@@ -125,7 +139,7 @@ Avoid unnecessary architectural barriers to future capabilities, but do not impl
 
 Do not assume v1 compatibility, the seven widgets, browser-owned workspace state or the current canned prompt behavior are permanent requirements. Explicitly assess migration/import of existing scenes and any compatibility or breaking-change decisions before release; do not remove support silently. Preserve the working installed plugin until replacement is validated, retain historical validation evidence, and favor native plugin lifecycle compatibility and stable product identifiers.
 
-The existing implementation and security findings remain useful references. [Security hardening issue #5](https://github.com/ericslandry/contextarium/issues/5) must be reassessed against the redesigned trust boundaries: carry forward applicable mitigations, verify which defects disappear with the old architecture, and track new risks. Do not assume isolation or prompt instructions alone establish security. Preserve provenance and verify rights to reused Spatial Explainer material before redistribution.
+The existing implementation and security findings remain useful references. [Security hardening issue #5](https://github.com/ericslandry/contextarium/issues/5) must be reassessed against the redesigned trust boundaries: carry forward applicable mitigations, verify which defects disappear with the old architecture, and track new risks. Reassess against the accepted trust model; do not reinstate rejected restrictions as release gates. Preserve existing Copilot permission enforcement and avoid introducing new privileged host paths. Preserve provenance and verify rights to reused Spatial Explainer material before redistribution.
 
 ## 6. Technical feasibility mandate
 
@@ -134,22 +148,22 @@ Before product implementation, run small, independently testable experiments tha
 | Experiment | Questions and required evidence |
 |---|---|
 | F1. Conversation observation | Can the installed Canvas extension obtain relevant user/assistant events, including ordering, completion and session identity? Check actual event availability, permissions and context boundaries. Demonstrate correct filtering across sessions. |
-| F2. Independent Copilot reasoning | Can a child or independent SDK session authenticate, use permitted models and reason concurrently without blocking or injecting turns into the primary chat? Measure responsiveness, usage and cancellation. Identify host/API/version constraints. |
+| F2. Independent Copilot reasoning | Use the demonstrated native Dynamic Workflow mechanism provisionally. Verify reliable foreground/worker event attribution, concurrency, cancellation, usage and lifecycle. Inherited foreground permissions are acceptable; do not bypass Copilot enforcement. |
 | F3. Independent canvas updates | Demonstrate a background provider updating a visible canvas while the primary conversation continues. Validate revision fencing, obsolete results, disconnect/reconnect and session teardown. Confirm human camera takeover remains effective. |
-| F4. Rich content isolation | Render representative independently authored HTML/CSS/SVG compositions in a shared multiscale space. Test zoom, clipping, typography, selection, opacity, transitions and inter-composition styling. Verify that scripts, event handlers, navigation, external resource access and host access are blocked as intended, with bounded resource consumption. |
+| F4. Rich content and interaction | Render representative agent-authored HTML/CSS/SVG/JavaScript directly in a shared multiscale document. Demonstrate an interactive composition, update/removal, cleanup and camera coexistence. Verify that the integration adds no path around Copilot's existing privilege enforcement; no mandatory iframe isolation or script-blocking tests. |
 | F5. State and synchronization | Demonstrate an in-memory authoritative workspace, incremental updates, coherent publication, renderer reconnect and manual export/import. Validate rejection of malformed/stale updates and independent presentation state. |
 | F6. Skill and native lifecycle | Verify bundled skill discovery and access to spatial tools on the actual Copilot client, along with native install/update and a fresh session without repository-specific scaffolding. |
 | F7. Experience and authoring | Compare a freely composed architecture explanation and a contrasting text-heavy or illustrated subject. Validate readability at realistic wide/narrow viewports, multiscale navigation, smooth meaningful transitions, and useful authoring efficiency. Measure calls, latency and visual quality rather than relying only on structural layout checks. |
 
-Prioritize F1–F4 because the background integration and rich-content isolation could materially change the architecture. Use deterministic providers for routine experiments. Live model prompts consume the user's limited Copilot allowance; obtain explicit approval before submitting any such prompts. Record versions, exact test procedures, observations, failures, assumptions and unresolved questions. Do not interpret a mock or documentation example as successful live-host validation.
+Prioritize the integrated foreground-to-workflow-to-Canvas path (F1–F3) and direct rendering (F4, F7). Previously completed iframe experiments are historical comparative evidence, not acceptance criteria. Use deterministic providers for routine experiments. Live model prompts consume the user's limited Copilot allowance; obtain explicit approval before submitting any such prompts. Record versions, exact test procedures, observations, failures, assumptions and unresolved questions. Do not interpret a mock or documentation example as successful live-host validation.
 
 Feasibility work should not prematurely replace the existing implementation. Small disposable probes are acceptable evidence gathering for a clean redesign, not a competing product or a commitment to maintaining parallel architectures.
 
 ## 7. Implementation strategy and decision gates
 
 1. **Formalize** — agree on this product vision and target boundaries. This document is the discovery baseline.
-2. **Validate feasibility** — perform the experiments above; record results and recommend an integration and isolation approach. Escalate material conflicts with agreed UX or security boundaries.
-3. **Design** — finalize the workspace contract, content isolation model, state authority, background coordination, navigation/history semantics, API boundaries, skill packaging, security threat model and migration plan. Separate verified facts from assumptions.
+2. **Validate feasibility** — perform the experiments above; record results and recommend an integration and rendering approach. Escalate material conflicts with agreed UX or security boundaries.
+3. **Design** — finalize the workspace contract, shared-document composition lifecycle, state authority, background coordination, navigation/history semantics, API boundaries, skill packaging, security threat model and migration plan. Separate verified facts from assumptions.
 4. **Implement** — cleanly redesign the product in reviewable increments, incorporating proven code where appropriate. Establish deterministic and live-host acceptance tests and maintain native installation/update.
 5. **Release** — demonstrate the agreed experience in representative scenarios, document limitations and migration, review security and provenance, and consolidate documentation around the adopted architecture.
 
@@ -161,7 +175,7 @@ No final implementation schema, framework, package layout, release version or ti
 - The agent can modify independently addressable content and preserve spatial continuity where useful.
 - Agent guidance, user navigation, back/forward, overview and meaningful breadcrumbs coexist without losing human authority.
 - Workspace and presentation state are independently inspectable and synchronized; stale work cannot overwrite current state.
-- Rich compositions cannot execute agent-authored scripts or escape their intended capability boundary.
+- Trusted compositions can execute agent-authored JavaScript and provide custom interaction without mandatory isolation. Contextarium does not introduce a bypass of existing Copilot permission enforcement; the host capability boundary and residual risks are documented.
 - Spatial composition does not unnecessarily block chat; any host-imposed limitation is explicitly demonstrated and addressed or accepted.
 - Manual export/import works without requiring durable infrastructure.
 - A bundled skill enables efficient composition, and native plugin installation and lifecycle remain supported.
@@ -170,7 +184,7 @@ No final implementation schema, framework, package layout, release version or ti
 ## 8. Open technical decisions
 
 - Actual Copilot extension/session capabilities, event subscriptions, authentication, usage cost and model availability.
-- Isolation mechanism for rich compositions and safe resource/asset policy.
+- Shared-document rendering and composition lifecycle, native host capability boundary, and resource/asset and trusted-import behavior.
 - Minimal spatial contract, transform model, native connectors versus content-authored relationships, and optional semantic anchors.
 - Camera history, breadcrumb derivation and reveal/tour semantics, including behavior when content changes.
 - Workspace serialization, incremental update protocol, validation and authority boundaries.
