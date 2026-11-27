@@ -55,6 +55,39 @@ test('observer correlates completed root turns and excludes interleaved worker a
   observer.close();
 });
 
+test('observer delivers one final reply for the native multi-turn tool sequence', () => {
+  const delivered = [];
+  const observer = observeForeground('desktop', turn => delivered.push(turn));
+  let id = 0;
+  const interactionId = 'one-user-interaction';
+  const user = { interactionId, messageId: 'root-user', content: 'Illustrate a buffer', parentAgentTaskId: 'root-task' };
+  const send = (type, data, extra) => observer.handle({ id: String(++id), type, data, ...extra });
+  const start = turnId => send('assistant.turn_start', { interactionId, agentMode: 'interactive', turnId });
+  const reply = (turnId, fields) => send('assistant.message', {
+    interactionId, turnId, originatingMessageId: user.messageId, messageId: 'root-' + turnId, ...fields,
+  });
+  send('user.message', user);
+  for (const turnId of ['0', '1']) {
+    start(turnId);
+    reply(turnId, { content: 'An interim tool step', toolRequests: [{ name: 'invoke_canvas_action' }] });
+    send('assistant.turn_end', { turnId });
+  }
+  start('2');
+  send('user.message', { interactionId, messageId: 'worker-user', content: 'Private work', source: 'agent-worker', parentAgentTaskId: 'worker-task' }, { agentId: 'worker' });
+  send('assistant.turn_start', { interactionId, turnId: '0', agentMode: 'interactive', parentToolCallId: 'worker-task' }, { agentId: 'worker' });
+  assert.deepEqual(delivered, []);
+  reply('2', { content: 'The buffer has capacity five.', phase: 'final_answer', toolRequests: [] });
+  send('assistant.turn_end', { turnId: '2' });
+  send('assistant.message', { interactionId, turnId: '0', originatingMessageId: 'worker-user', messageId: 'child-result', content: 'Worker output' }, { agentId: 'worker' });
+  send('assistant.turn_end', { turnId: '0', parentToolCallId: 'worker-task' }, { agentId: 'worker' });
+  send('user.message', user);
+  start('2');
+  reply('2', { content: 'A differently journaled replay', phase: 'final_answer' });
+  send('assistant.turn_end', { turnId: '2' });
+  assert.deepEqual(delivered, [{ user: user.content, assistant: 'The buffer has capacity five.' }]);
+  observer.close();
+});
+
 test('coalescing publishes the current intent while foreground remains responsive', async () => {
   const workspace = new Workspace('a', document());
   const jobs = [];

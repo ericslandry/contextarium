@@ -17,7 +17,7 @@ The [prototype](../prototype/) is installable through a separate Copilot marketp
 
 ## Verification
 
-- **6 prototype regression tests passed** using Node **24.22.3** and Edge **158.0.4370.45**. Run `node --test prototype/tests/*.test.mjs`. Set `CONTEXTARIUM_BROWSER` on systems without the default Windows Edge path.
+- **7 prototype regression tests passed** using Node **24.22.3** and Edge **158.0.4370.45**. Run `node --test prototype/tests/*.test.mjs`. Set `CONTEXTARIUM_BROWSER` on systems without the default Windows Edge path.
 - The existing local shipping checkout at `3c3c902` passed the smoke command and **8 existing tests** through `node --test tests/transport.mjs tests/layout-test.mjs`. The new package's tests are independent.
 - The Edge test rendered the relay overview at **1280 × 800** and the reading focus at **430 × 660**, with checks for scoped CSS, shared SVG document ownership, typography and scroll width. The focused reading body projected at least **13 CSS px**. The narrow two-composition synthetic zoom run produced **17.0 ms p95** across **79** animation-frame intervals. This is a standalone, two-composition sample with its own workload. It does not establish native performance or a comparison with the historical iframe stress test.
 - Native installation used Copilot desktop **1.5.0** and the previously established CLI **1.0.115-7** / SDK protocol **4** environment. The prototype was installed from its local marketplace and left open for review. The private branch marketplace installation and upgrade lifecycle were not exercised. The initial installation and deterministic verification used no Copilot model calls.
@@ -37,6 +37,12 @@ The installed SDK passes a `CanvasProviderInvokeActionRequest` envelope to the c
 The approved retry opened commit `143dcdf` in a fresh native No repository session with Copilot Fusion Standard. The foreground request used `request_visualization` once and acknowledged queuing. The desktop showed one `contextarium-compose` workflow, running separately from chat, then showed it **Completed in 11 s**. The Canvas reported **Workspace updated** and visibly added a model-authored **4 vs 8 samples per tick** comparison below Buffer Lab. It showed the correct fifth-tick backlogs of **0 and 15** and kept the three starter compositions.
 
 The camera remained at **26%** with Follow off. The existing compositions stayed in their prior positions in before/after screenshots. The prompt asked the worker to return a focus target. The serialized focus field was not independently inspected, so the observation establishes that this live publication did not move the camera. Automatic composition remained paused for this test.
+
+## Automatic curation event replay
+
+The captured desktop event sequence from the successful explicit test exposed two mismatches with the original fixture. Copilot attached a parent-task identifier to the root user event, and one logical foreground request occupied three SDK turns. The first two turns requested tools. The final turn provided the user-visible reply. Worker events carried agent attribution and shared the interaction identifier.
+
+The observer now uses a matching root turn and reply to attribute the user event, retains the user request across intermediate tool turns, and deduplicates logical completion. A sanitized replay of the recorded journal emitted exactly one foreground pair and excluded worker output. An automated regression covers the same event structure and replay. This was an offline replay. Automatic workflow admission and Canvas publication have not yet been observed together live.
 
 ## Remaining acceptance
 
