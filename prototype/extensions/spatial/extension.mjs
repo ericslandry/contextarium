@@ -80,7 +80,7 @@ async function compose(input, signal) {
       }),
     },
   };
-    const run = await session.workflow.start(workflow, { args: compact, notifyOnComplete: false, logPhaseNames: false });
+  const run = await session.workflow.start(workflow, { args: compact, notifyOnComplete: false, logPhaseNames: false });
   const cancel = () => { session.workflow.cancel(run.runId).catch(() => {}); };
   signal.addEventListener('abort', cancel, { once: true });
   try {
@@ -115,7 +115,8 @@ const canvas = createCanvas({
         type: 'object', additionalProperties: false, required: ['intent'],
         properties: { intent: { type: 'string' }, context: { type: 'string' } },
       },
-      handler: async ({ intent, context }) => {
+      handler: async ({ input }) => {
+        const { intent, context } = input ?? {};
         if (typeof intent !== 'string' || !intent.trim()) throw new Error('Provide a visualization intent');
         activated = true;
         coordinator.request(intent.trim().slice(0, 4_000), typeof context === 'string' ? context.slice(0, 7_000) : '');
@@ -126,7 +127,8 @@ const canvas = createCanvas({
       name: 'set_automatic_composition',
       description: 'Enable or pause background composition only when the user explicitly requests the setting change. Enabling may consume Copilot model usage on completed conversation turns.',
       inputSchema: { type: 'object', additionalProperties: false, required: ['enabled'], properties: { enabled: { type: 'boolean' } } },
-      handler: async ({ enabled }) => {
+      handler: async ({ input }) => {
+        const { enabled } = input ?? {};
         if (typeof enabled !== 'boolean') throw new Error('Provide a boolean enabled value');
         if (enabled) activated = true;
         const automatic = coordinator.configure(enabled);

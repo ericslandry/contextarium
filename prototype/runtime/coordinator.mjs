@@ -21,8 +21,9 @@ export class Coordinator {
   observe(turn) {
     if (this.#closed) return;
     this.#context = [...this.#context.slice(-3), turn];
+    if (!this.#automatic) return;
     this.workspace.advanceContext();
-    if (this.#automatic && this.#pending?.kind !== 'explicit') {
+    if (this.#pending?.kind !== 'explicit') {
       this.#pending = { kind: 'conversation' };
       this.#schedule(this.delay);
     }
