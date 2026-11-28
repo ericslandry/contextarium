@@ -1,6 +1,6 @@
 # Contextarium for GitHub Copilot Canvas
 
-Contextarium 0.4.1 upgrades the existing `contextarium@contextarium` plugin. The package uses the existing extension directory and `contextarium-experiment` Canvas ID. It includes the spatial runtime and bundled skills. Copilot loads them from the installed package without a separate checkout or build.
+Contextarium 0.5.0 upgrades the existing `contextarium@contextarium` plugin. The package uses the existing extension directory and `contextarium-experiment` Canvas ID. It includes the spatial runtime and bundled skills. Copilot loads them from the installed package without a separate checkout or build.
 
 ## Install or update in Copilot Desktop
 

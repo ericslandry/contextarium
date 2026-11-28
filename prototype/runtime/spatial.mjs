@@ -1,11 +1,15 @@
 
+import { createBackdrop, interpolateCamera, planFlight } from './environment.mjs';
+
 const byId = id => document.getElementById(id);
 const viewport = byId('viewport');
+const controls = byId('canvas-controls');
 const world = byId('world');
 const empty = byId('empty');
 const activity = byId('activity');
 const status = byId('status');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
+const drawBackdrop = createBackdrop(byId('backdrop'));
 const items = new Map();
 const mounted = new Map();
 const breadcrumbs = [];
@@ -22,6 +26,7 @@ let follow = true;
 let epoch = 0;
 let overviewMode = true;
 let camera = { x: 0, y: 0, zoom: 1 };
+let chromeInset = 0;
 let history = [];
 let historyIndex = -1;
 let animation = 0;
@@ -46,12 +51,20 @@ function showActivity(text, kind = 'notice') {
   }
 }
 
-const stopAnimation = () => { cancelAnimationFrame(animation); animation = 0; };
+function stopAnimation() {
+  if (!animation) return;
+  cancelAnimationFrame(animation);
+  animation = 0;
+  redraw();
+}
+
 function draw() {
   pendingDraw = 0;
   const { width, height } = viewport.getBoundingClientRect();
-  world.style.transform = 'translate(' + (width / 2 - camera.x * camera.zoom) + 'px,' +
-    (height / 2 - camera.y * camera.zoom) + 'px) scale(' + camera.zoom + ')';
+  const x = width / 2 - camera.x * camera.zoom;
+  const y = height / 2 - camera.y * camera.zoom;
+  world.style.transform = `translate(${x}px,${y}px) scale(${camera.zoom})`;
+  drawBackdrop(camera, width, height, x, y, Boolean(animation), motion.matches);
 }
 
 function redraw() {
@@ -99,24 +112,25 @@ function updateHistory() {
   byId('forward').disabled = historyIndex >= history.length - 1;
 }
 
-function fly(target, remember = true, duration = 660) {
+function fly(target, remember = true) {
   stopAnimation();
-  const from = camera;
+  const from = { ...camera };
   const started = performance.now();
-  if (motion.matches) duration = 0;
+  const { duration, arc } = planFlight(from, target);
+  const changed = from.x !== target.x || from.y !== target.y || from.zoom !== target.zoom;
   const travel = frame => {
-    const ratio = duration ? clamp((frame - started) / duration, 0, 1) : 1;
-    const eased = ratio * ratio * (3 - 2 * ratio);
-    const zoom = Math.exp(Math.log(from.zoom) * (1 - eased) + Math.log(target.zoom) * eased);
-    camera = { x: from.x + (target.x - from.x) * eased, y: from.y + (target.y - from.y) * eased, zoom };
-    redraw();
-    if (ratio < 1) animation = requestAnimationFrame(travel);
-    else {
+    const ratio = motion.matches || !changed ? 1 : clamp((frame - started) / duration, 0, 1);
+    if (ratio < 1) {
+      camera = interpolateCamera(from, target, ratio, arc, minZoom);
+      animation = requestAnimationFrame(travel);
+    } else {
       animation = 0;
       camera = { x: target.x, y: target.y, zoom: target.zoom };
       if (remember) record();
       report();
     }
+    cancelAnimationFrame(pendingDraw);
+    draw();
   };
   animation = requestAnimationFrame(travel);
 }
@@ -129,10 +143,11 @@ function fit(values) {
   const right = Math.max(...values.map(item => item.x + item.width * item.scale));
   const bottom = Math.max(...values.map(item => item.y + item.height * item.scale));
   const margin = Math.min(100, viewport.clientWidth * 0.12);
+  const availableHeight = viewport.clientHeight - chromeInset;
+  const zoom = clamp(Math.min((viewport.clientWidth - margin) / (right - left),
+    (availableHeight - Math.min(margin, availableHeight * 0.2)) / (bottom - top)), minZoom, maxZoom);
   return {
-    x: (left + right) / 2, y: (top + bottom) / 2,
-    zoom: clamp(Math.min((viewport.clientWidth - margin) / (right - left),
-      (viewport.clientHeight - margin) / (bottom - top)), minZoom, maxZoom),
+    x: (left + right) / 2, y: (top + bottom) / 2 - chromeInset / (2 * zoom), zoom,
   };
 }
 
@@ -170,6 +185,7 @@ function updateBreadcrumbs() {
   if (previous !== current) {
     previous.removeAttribute('aria-current');
     current.setAttribute('aria-current', 'location');
+    if (!trail.contains(active)) trail.scrollLeft = trail.scrollWidth;
   }
   if (restoreFocus) (breadcrumbs[shared - 1]?.button ?? base).focus();
 }
@@ -298,6 +314,7 @@ function reconcile(snapshot) {
   const incoming = new Set(snapshot.compositions.map(item => item.id));
   for (const id of items.keys()) if (!incoming.has(id)) remove(id);
   if (changedGeneration) {
+    stopAnimation();
     for (const id of [...items.keys()]) remove(id);
     history = [];
     historyIndex = -1;
@@ -493,7 +510,9 @@ window.addEventListener('keydown', event => {
 });
 window.addEventListener('keyup', event => { if (event.code === 'Space') space = false; });
 window.addEventListener('blur', () => { space = false; pendingDrag = undefined; });
-new ResizeObserver(() => {
+const resize = new ResizeObserver(() => {
+  chromeInset = Math.min(controls.offsetTop + controls.offsetHeight + 8, viewport.clientHeight / 2);
+  viewport.style.setProperty('--chrome-inset', chromeInset + 'px');
   if (overviewMode && items.size && !animation && viewport.clientWidth >= 32 && viewport.clientHeight >= 32) {
     camera = fit([...items.values()]);
     if (historyIndex < 0) record();
@@ -501,7 +520,10 @@ new ResizeObserver(() => {
   }
   redraw();
   report();
-}).observe(viewport);
+});
+resize.observe(viewport);
+resize.observe(controls);
+motion.addEventListener('change', redraw);
 window.addEventListener('pagehide', () => {
   stream?.close();
   for (const entry of mounted.values()) entry.dispose();
