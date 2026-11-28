@@ -5,7 +5,7 @@
 **Development branch** `prototype/clean-redesign`  
 **Prototype package** `contextarium-redesign` 0.1.0
 
-The [prototype](../prototype/) is installable through a separate Copilot marketplace entry and has a browser demo driven by deterministic events. The shipping package retains its existing identity, runtime and entry. The branch catalog adds a separate prototype entry.
+The redesign shipped under the existing Contextarium package as 0.3.0. The historical observations below describe the separately installed preview unless identified as promotion checks. A deterministic browser demo remains available.
 
 | Milestone | Implemented | Verified |
 | --- | --- | --- |
@@ -60,7 +60,7 @@ The Canvas reported **Workspace updated**. The existing Buffer Lab composition g
 
 ## Promotion to the Contextarium package
 
-Version 0.3.0 adopts the tested runtime under the existing marketplace, package, extension and Canvas IDs. The observations above apply to the original preview configuration. The production entry uses the same workflow and rendering code. The marketplace keeps one Contextarium entry. Legacy declarative exports can still be opened in the retained 0.2.0 viewer. See the [update and rollback guide](COPILOT-PLUGIN.md).
+Version 0.3.0 adopts the tested runtime under the existing marketplace, package, extension and Canvas IDs. The observations above apply to the original preview configuration. The production entry uses the same workflow and rendering code. The marketplace keeps one Contextarium entry. In Copilot Desktop 1.5.0, refreshing the existing `copilot-plugin` marketplace and choosing Update reported **Version 0.2.0 to 0.3.0** for `contextarium@contextarium`. The bundled skill appeared under the updated plugin. A fresh no-repository session opened the starter workspace under the original Canvas launcher, and a click on Step changed the queue from zero to one. The upgrade check used no Copilot prompts. Legacy declarative exports can still be opened in the retained 0.2.0 viewer. See the [update and rollback guide](COPILOT-PLUGIN.md).
 
 ## Remaining acceptance
 

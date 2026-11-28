@@ -34,7 +34,8 @@ test('native adapter feeds attributed conversation to a workflow and publishes i
     throw new Error('Expected integration event did not arrive');
   };
   await assert.rejects(() => canvas.open({ sessionId: 'wrong', instanceId }), /inactive/);
-  const { url } = await canvas.open({ sessionId, instanceId });
+  const { url, title } = await canvas.open({ sessionId, instanceId });
+  assert.equal(title, 'Contextarium');
   const stream = await fetch(url + 'events');
   const reader = stream.body.pipeThrough(new TextDecoderStream()).getReader();
   const events = [];

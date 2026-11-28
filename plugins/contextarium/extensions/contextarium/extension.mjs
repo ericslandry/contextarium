@@ -56,7 +56,7 @@ let unsubscribe;
 let server;
 let startingServer;
 let presentation;
-let status = 'Ready';
+let status = 'Automatic composition paused';
 let lastUsage = null;
 let shutDown = false;
 let activated = false;
@@ -97,9 +97,10 @@ async function compose(input, signal) {
 }
 
 const emptyInput = { type: 'object', properties: {}, additionalProperties: false };
+const displayName = 'Contextarium';
 const canvas = createCanvas({
   id: 'contextarium-experiment',
-  displayName: 'Contextarium',
+  displayName,
   description: 'A living spatial workspace for this Copilot session.',
   actions: [
     {
@@ -150,7 +151,7 @@ const canvas = createCanvas({
       throw new Error('Canvas session closed');
     }
     activated = true;
-    return { url: server.open(instanceId), title: 'Contextarium Redesign' };
+    return { url: server.open(instanceId), title: displayName };
   },
   onClose: async ({ instanceId }) => { server?.closeView(instanceId); },
 });
