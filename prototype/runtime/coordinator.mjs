@@ -12,14 +12,21 @@ export class Coordinator {
   }
 
   configure(automatic) {
+    const changed = this.#automatic !== automatic;
     this.#automatic = automatic;
-    if (!automatic && this.#pending?.kind === 'conversation') this.#pending = undefined;
+    if (!automatic && this.#pending?.kind === 'conversation') {
+      this.#pending = undefined;
+      clearTimeout(this.#timer);
+    }
     if (!automatic && this.#active?.kind === 'conversation') this.#active.controller.abort();
+    if (changed && !this.#pending && (!this.#active || this.#active.controller.signal.aborted)) {
+      this.onStatus(automatic ? 'Automatic composition on' : 'Automatic composition paused', 'notice');
+    }
     return this.#automatic;
   }
 
   observe(turn) {
-    if (this.#closed) return;
+    if (this.#closed || /^\/(?:contextarium[:/])?feedback(?:\s|$)/i.test(turn.user?.trimStart())) return;
     this.#context = [...this.#context.slice(-3), turn];
     if (!this.#automatic) return;
     this.workspace.advanceContext();
@@ -40,6 +47,7 @@ export class Coordinator {
   #schedule(delay) {
     if (this.#active || this.#closed) return;
     clearTimeout(this.#timer);
+    this.onStatus('Composition queued', 'busy');
     this.#timer = setTimeout(() => { void this.#run(); }, delay);
   }
 
@@ -51,7 +59,7 @@ export class Coordinator {
     const presentation = this.presentation();
     const controller = new AbortController();
     this.#active = { controller, kind: request.kind };
-    this.onStatus('Composing');
+    this.onStatus('Composing', 'busy');
     try {
       const candidate = await this.compose({
         request, workspace: this.workspace.snapshot(), presentation, conversation: structuredClone(this.#context),
@@ -62,10 +70,11 @@ export class Coordinator {
           this.workspace.ticket().generation === ticket.generation) {
         this.#pending = request;
       }
+      const showResult = result.status === 'committed' || (result.status === 'unchanged' && request.kind === 'explicit');
       this.onStatus(result.status === 'committed' ? 'Workspace updated' :
-        result.status === 'stale' ? 'Superseded update discarded' : 'Workspace is current');
+        result.status === 'stale' ? 'Superseded update discarded' : 'Workspace is current', showResult ? 'notice' : 'idle');
     } catch {
-      this.onStatus(controller.signal.aborted ? 'Composition cancelled' : 'Composition failed');
+      if (!controller.signal.aborted) this.onStatus('Composition failed', 'error');
     } finally {
       this.#active = undefined;
       if (this.#pending) this.#schedule(this.#pending.kind === 'explicit' ? 0 : this.delay);

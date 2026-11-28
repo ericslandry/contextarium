@@ -23,8 +23,9 @@
     </div>
   </header>
   <div class="trail">
-    <nav id="breadcrumbs" aria-label="Spatial breadcrumbs">Workspace</nav>
+    <nav id="breadcrumbs" aria-label="Spatial breadcrumbs"><button id="workspace-crumb" type="button" aria-current="location">Workspace</button></nav>
     <select id="jump" aria-label="Focus a composition"><option value="">Focus…</option></select>
+    <button id="select-text" type="button" aria-pressed="false" title="Toggle text selection mode">Select text</button>
     <div id="demo" class="demo" hidden>
       <select id="scene" aria-label="Demonstration scene">
         <option value="relay">Relay architecture</option>
@@ -35,17 +36,12 @@
   </div>
   <main id="viewport" aria-label="Spatial workspace" tabindex="0" aria-describedby="navigation-hint">
     <div id="world"></div>
-    <div id="empty" hidden>Ask Copilot to visualize a topic, or import a workspace.</div>
-  </main>
-  <footer class="controls">
-    <span id="status" role="status">Connecting</span>
-    <span id="navigation-hint">Wheel to zoom · Space + drag to pan</span>
-    <div class="zoom" role="group" aria-label="Zoom">
-      <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
-      <output id="scale" aria-label="Camera scale">100%</output>
-      <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+    <div id="empty" hidden>
+      <div><h1>Your workspace is empty</h1><p>Ask Copilot to visualize something from this conversation, or import a workspace.</p></div>
     </div>
-  </footer>
+    <div id="activity" data-kind="busy"><span class="activity-dot" aria-hidden="true"></span><span id="status" role="status">Connecting</span></div>
+  </main>
+  <p id="navigation-hint" hidden>Drag or use the arrow keys to pan. Use the wheel or plus and minus keys to zoom. Turn on Select text to highlight text.</p>
   <dialog id="trust">
     <form method="dialog">
       <h2>Open executable workspace?</h2>

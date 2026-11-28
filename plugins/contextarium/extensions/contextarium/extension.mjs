@@ -7,8 +7,8 @@ import { startWorkspaceServer } from '../../../../prototype/runtime/server.mjs';
 import { Workspace } from '../../../../prototype/runtime/workspace.mjs';
 
 const load = path => readFile(new URL(path, import.meta.url), 'utf8');
-const guide = (await load('../../../../prototype/skills/contextarium/SKILL.md')).replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').trim();
-const opening = JSON.parse(await load('../../../../prototype/examples/relay.json'));
+const guide = (await load('../../../../prototype/skills/contextarium/SKILL.md'))
+  .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').trim();
 
 const schema = {
   type: 'object',
@@ -56,14 +56,14 @@ let unsubscribe;
 let server;
 let startingServer;
 let presentation;
-let status = 'Automatic composition paused';
+let activity = { text: 'Automatic composition paused', kind: 'idle' };
 let lastUsage = null;
 let shutDown = false;
 let activated = false;
 
-function setStatus(value) {
-  status = value;
-  server?.broadcastStatus(value);
+function setStatus(text, kind = 'notice') {
+  activity = { text, kind };
+  server?.broadcastStatus(activity);
 }
 
 async function compose(input, signal) {
@@ -107,7 +107,7 @@ const canvas = createCanvas({
       name: 'inspect_workspace',
       description: 'Read the current workspace, authoring guidance, presentation context and last background usage.',
       inputSchema: emptyInput,
-      handler: async () => ({ workspace: workspace.snapshot(), presentation: presentation ?? null, guide, status, lastUsage }),
+      handler: async () => ({ workspace: workspace.snapshot(), presentation: presentation ?? null, guide, status: activity.text, lastUsage }),
     },
     {
       name: 'request_visualization',
@@ -133,7 +133,6 @@ const canvas = createCanvas({
         if (typeof enabled !== 'boolean') throw new Error('Provide a boolean enabled value');
         if (enabled) activated = true;
         const automatic = coordinator.configure(enabled);
-        setStatus(automatic ? 'Automatic composition on' : 'Automatic composition paused');
         return { automatic };
       },
     },
@@ -141,7 +140,7 @@ const canvas = createCanvas({
   open: async ({ sessionId, instanceId }) => {
     if (shutDown || sessionId !== session.sessionId) throw new Error('Canvas session is inactive');
     startingServer ??= startWorkspaceServer({
-      workspace, status: () => status,
+      workspace, activity: () => activity,
       onImport: () => { coordinator.reset(); setStatus('Workspace imported'); },
       onPresentation: value => { presentation = value; },
     }).catch(error => { startingServer = undefined; throw error; });
@@ -166,7 +165,7 @@ function closeSession() {
 }
 
 session = await joinSession({ canvases: { definitions: [canvas] }, workflows: [workflow] });
-workspace = new Workspace(session.sessionId, opening);
+workspace = new Workspace(session.sessionId);
 coordinator = new Coordinator({ workspace, compose, presentation: () => presentation, onStatus: setStatus });
 observer = observeForeground(session.sessionId, turn => coordinator.observe(turn));
 unsubscribe = session.on(event => {
