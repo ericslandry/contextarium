@@ -64,6 +64,21 @@ test('browser renders both scenes, publishes without stealing the camera, and cl
         return reply.result.value;
       };
       const present = selector => evaluate('Boolean(document.querySelector(' + JSON.stringify(selector) + '))');
+      const transform = () => evaluate("document.querySelector('#world').style.transform");
+      const textLine = selector => evaluate(`(() => {
+        const text = document.querySelector(${JSON.stringify(selector)}).firstChild;
+        const range = document.createRange();
+        range.setStart(text, 0);
+        range.setEnd(text, Math.min(14, text.length));
+        const rect = range.getBoundingClientRect();
+        return { x: rect.left + 1, y: (rect.top + rect.bottom) / 2, end: rect.right - 1 };
+      })()`);
+      const dragMouse = async ({ x, y, end }) => {
+        await rpc('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', buttons: 1, clickCount: 1, x, y });
+        await rpc('Input.dispatchMouseEvent', { type: 'mouseMoved', button: 'left', buttons: 1, x: (x + end) / 2, y });
+        await rpc('Input.dispatchMouseEvent', { type: 'mouseMoved', button: 'left', buttons: 1, x: end, y });
+        await rpc('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', buttons: 0, clickCount: 1, x: end, y });
+      };
       const screenshot = async name => {
         if (!process.env.CONTEXTARIUM_SCREENSHOTS) return;
         const out = resolve(process.env.CONTEXTARIUM_SCREENSHOTS);
@@ -82,14 +97,33 @@ test('browser renders both scenes, publishes without stealing the camera, and cl
       assert.equal(await evaluate("document.querySelectorAll('iframe').length"), 0);
       assert.equal(await evaluate("getComputedStyle(document.querySelector('.relay-board')).backgroundColor"), 'rgb(22, 52, 62)');
       assert.equal(await evaluate("document.querySelector('#surface-relay svg').ownerDocument === document"), true);
+      assert.equal(await evaluate("document.querySelector('#viewport').getBoundingClientRect().bottom === innerHeight"), true);
+      assert.equal(await present('[aria-label="Zoom in"], [aria-label="Zoom out"]'), false);
+      await eventually(() => present('#activity[data-kind="idle"]'), 'quiet canvas while idle');
       await screenshot('relay-overview');
-      await evaluate("document.querySelector('[data-step]').click()");
+      const step = await evaluate(`(() => {
+        const { x, y, width, height } = document.querySelector('[data-step]').getBoundingClientRect();
+        return { x: x + width / 2, y: y + height / 2 };
+      })()`);
+      await rpc('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', buttons: 1, clickCount: 1, ...step });
+      await rpc('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, ...step });
       assert.equal(await evaluate("document.querySelector('[data-queue]').value"), '1');
       const initialZoom = await evaluate("new DOMMatrix(getComputedStyle(document.querySelector('#world')).transform).a");
-      await evaluate("document.querySelector('#demo-update').click(); document.querySelector('#zoom-in').click();");
-      await eventually(() => evaluate("Math.abs(new DOMMatrix(getComputedStyle(document.querySelector('#world')).transform).a - " + (initialZoom * 1.38) + ") < 0.0001"), 'manual zoom applied');
+      await evaluate("document.querySelector('.relay-board').click(); document.querySelector('#breadcrumbs button:last-child').focus()");
+      const wheel = await evaluate(`(() => {
+        const { left, top } = document.querySelector('#viewport').getBoundingClientRect();
+        return { x: left + 8, y: top + 8 };
+      })()`);
+      const deltaY = -180;
+      await evaluate("document.querySelector('#demo-update').click()");
+      await rpc('Input.dispatchMouseEvent', { type: 'mouseWheel', deltaX: 0, deltaY, ...wheel });
+      await eventually(() => present('#activity[data-kind="busy"]'), 'background activity indicator');
+      const wheelZoom = initialZoom * Math.exp(-deltaY * 0.0018);
+      await eventually(() => evaluate("Math.abs(new DOMMatrix(getComputedStyle(document.querySelector('#world')).transform).a - " + wheelZoom + ") < 0.0001"), 'wheel zoom applied');
       const manual = await evaluate("document.querySelector('#world').style.transform");
       await eventually(() => present('#surface-demo-update'), 'coalesced background publication');
+      await eventually(() => evaluate("document.querySelector('#status').textContent === 'Workspace updated'"), 'publication feedback');
+      assert.equal(await evaluate("document.activeElement === document.querySelector('#breadcrumbs button:last-child')"), true);
       assert.equal(await evaluate("document.querySelector('[data-queue]').value"), '1');
       assert.equal(await evaluate("document.querySelector('#world').style.transform"), manual);
       assert.equal(await evaluate("document.querySelector('#follow').getAttribute('aria-pressed')"), 'false');
@@ -112,6 +146,7 @@ test('browser renders both scenes, publishes without stealing the camera, and cl
       assert.equal(await importDocument([teardown], 0, 1), 200);
       await eventually(() => present('[data-marker]'), 'imported executable composition');
       assert.equal(await evaluate("document.querySelector('[data-marker]').textContent"), 'mounted');
+      assert.equal(await evaluate("document.activeElement.id"), 'workspace-crumb');
       await evaluate("document.querySelector('#scene').value='reading'; document.querySelector('#scene').dispatchEvent(new Event('change'))");
       await eventually(() => present('#surface-essay'), 'editorial reading scene');
       assert.equal(await evaluate('window.cleanupCount'), 1);
@@ -123,7 +158,22 @@ test('browser renders both scenes, publishes without stealing the camera, and cl
       assert.equal(await evaluate("document.querySelector('#surface-essay').getBoundingClientRect().width > 360"), true);
       assert.equal(await evaluate("parseFloat(getComputedStyle(document.querySelector('.columns p')).fontSize) * document.querySelector('.essay').getBoundingClientRect().width / document.querySelector('.essay').offsetWidth >= 13"), true);
       assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth"), true);
+      assert.equal(await evaluate("document.querySelector('#select-text').offsetTop === document.querySelector('#jump').offsetTop"), true);
       await screenshot('reading-narrow-focus');
+      const beforePan = await transform();
+      await dragMouse(await textLine('.columns p'));
+      await eventually(async () => await transform() !== beforePan, 'plain drag pans over composition text');
+      assert.equal(await evaluate("getSelection().type === 'Range'"), false);
+      assert.equal(await evaluate("document.activeElement.id"), 'viewport');
+      await evaluate("document.querySelector('#select-text').click()");
+      const beforeSelection = await transform();
+      const line = await textLine('.columns p');
+      assert.equal(await evaluate(`document.elementFromPoint(${line.x}, ${line.y}).matches('.columns p')`), true);
+      await dragMouse(line);
+      assert.equal(await evaluate("getSelection().toString().trim().length > 0"), true);
+      assert.equal(await transform(), beforeSelection);
+      await evaluate("document.querySelector('#select-text').click()");
+      assert.equal(await evaluate("getSelection().type === 'Range'"), false);
       const metrics = await evaluate(`new Promise(resolve => {
         const intervals = [];
         let previous;
@@ -141,6 +191,27 @@ test('browser renders both scenes, publishes without stealing the camera, and cl
       })`);
       assert.equal(metrics.samples, 79);
       console.log('Narrow direct-rendering zoom sample:', metrics);
+      assert.equal(await importDocument([], 2, 0), 200);
+      await eventually(() => present('#empty:not([hidden])'), 'empty workspace guidance');
+      await eventually(() => present('#activity[data-kind="idle"]'), 'import notice expires');
+      await screenshot('empty-workspace');
+      await evaluate("document.querySelector('#follow').click(); document.querySelector('#demo-update').click()");
+      await eventually(() => evaluate(`(() => {
+        const first = document.querySelector('#surface-demo-update')?.getBoundingClientRect();
+        return first && Math.abs((first.left + first.right) / 2 - innerWidth / 2) < 1;
+      })()`), 'first composition fits the untouched overview');
+      assert.equal(await present('#empty[hidden]'), true);
+      assert.equal(await importDocument([], 3, 1), 200);
+      await eventually(() => present('#empty:not([hidden])'), 'reset to an empty workspace');
+      const reset = await transform();
+      await dragMouse({ x: 35, y: 500, end: 125 });
+      const pannedEmpty = await eventually(async () => {
+        const current = await transform();
+        return current !== reset && current;
+      }, 'manual pan in the empty workspace');
+      await evaluate("document.querySelector('#demo-update').click()");
+      await eventually(() => present('#surface-demo-update'), 'first publication after manual navigation');
+      assert.equal(await transform(), pannedEmpty);
       assert.deepEqual(errors, []);
     } finally {
       socket?.close();

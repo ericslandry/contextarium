@@ -33,7 +33,7 @@ function isPresentation(value) {
 }
 
 // The renderer protocol only accepts workspace documents and presentation metadata.
-export async function startWorkspaceServer({ workspace, status, onImport, onPresentation, demo }) {
+export async function startWorkspaceServer({ workspace, activity, onImport, onPresentation, demo }) {
   const views = new Map();
   let origin;
   const emit = (response, event) => {
@@ -67,7 +67,8 @@ export async function startWorkspaceServer({ workspace, status, onImport, onPres
         view.streams.add(response);
         response.on('close', () => view.streams.delete(response));
         emit(response, { type: 'snapshot', snapshot: workspace.snapshot(), rendererId, demo: Boolean(demo) });
-        emit(response, { type: 'status', text: status() });
+        const currentActivity = activity();
+        emit(response, { type: 'status', ...currentActivity, kind: currentActivity.kind === 'busy' ? 'busy' : 'idle' });
         return;
       }
       if (request.method === 'GET' && route === 'export') return json(response, 200, workspace.export());
@@ -123,7 +124,7 @@ export async function startWorkspaceServer({ workspace, status, onImport, onPres
     },
     broadcastStatus(value) {
       for (const view of views.values()) {
-        for (const response of view.streams) emit(response, { type: 'status', text: value });
+          for (const response of view.streams) emit(response, { type: 'status', ...value });
       }
     },
     close() {

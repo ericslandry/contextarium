@@ -2,9 +2,13 @@
 const byId = id => document.getElementById(id);
 const viewport = byId('viewport');
 const world = byId('world');
+const empty = byId('empty');
+const activity = byId('activity');
+const status = byId('status');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
 const items = new Map();
 const mounted = new Map();
+const breadcrumbs = [];
 const minZoom = 0.002;
 const maxZoom = 64;
 const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
@@ -24,20 +28,30 @@ let animation = 0;
 let pendingDraw = 0;
 let pendingReport = 0;
 let wheelHistory = 0;
+let activityTimeout;
 let space = false;
+let selectingText = false;
+let pendingDrag;
 let drag;
 let pinch;
 const touches = new Map();
 
-const status = text => { byId('status').textContent = text; };
+function showActivity(text, kind = 'notice') {
+  clearTimeout(activityTimeout);
+  activity.dataset.kind = kind;
+  const message = kind === 'idle' ? '' : text;
+  if (status.textContent !== message) status.textContent = message;
+  if (kind === 'notice' || kind === 'error') {
+    activityTimeout = setTimeout(() => showActivity('', 'idle'), kind === 'error' ? 7500 : 3000);
+  }
+}
+
 const stopAnimation = () => { cancelAnimationFrame(animation); animation = 0; };
 function draw() {
   pendingDraw = 0;
   const { width, height } = viewport.getBoundingClientRect();
   world.style.transform = 'translate(' + (width / 2 - camera.x * camera.zoom) + 'px,' +
     (height / 2 - camera.y * camera.zoom) + 'px) scale(' + camera.zoom + ')';
-  byId('scale').value = (camera.zoom >= 0.1 ? Math.round(camera.zoom * 100) :
-    (camera.zoom * 100).toFixed(1)) + '%';
 }
 
 function redraw() {
@@ -122,32 +136,64 @@ function fit(values) {
   };
 }
 
+function updateBreadcrumbs() {
+  const trail = byId('breadcrumbs');
+  const base = byId('workspace-crumb');
+  const previous = breadcrumbs.at(-1)?.button ?? base;
+  const path = [];
+  for (let item = items.get(selected); item; item = items.get(item.parent)) path.unshift(item);
+
+  let shared = 0;
+  while (shared < breadcrumbs.length && breadcrumbs[shared].id === path[shared]?.id) shared++;
+
+  const active = document.activeElement;
+  let restoreFocus = false;
+  for (const { button, separator } of breadcrumbs.splice(shared)) {
+    if (button === active) restoreFocus = true;
+    button.remove();
+    separator.remove();
+  }
+  for (const { id } of path.slice(shared)) {
+    const separator = document.createElement('span');
+    separator.textContent = '›';
+    separator.setAttribute('aria-hidden', 'true');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.addEventListener('click', () => focus(id, true));
+    trail.append(separator, button);
+    breadcrumbs.push({ id, button, separator });
+  }
+  for (const [index, { button }] of breadcrumbs.entries()) {
+    if (button.textContent !== path[index].title) button.textContent = path[index].title;
+  }
+  const current = breadcrumbs.at(-1)?.button ?? base;
+  if (previous !== current) {
+    previous.removeAttribute('aria-current');
+    current.setAttribute('aria-current', 'location');
+  }
+  if (restoreFocus) (breadcrumbs[shared - 1]?.button ?? base).focus();
+}
+
 function select(id) {
   selected = id && items.get(id)?.opacity > 0 ? id : null;
   for (const [key, entry] of mounted) entry.node.setAttribute('aria-current', key === selected ? 'true' : 'false');
-  const trail = byId('breadcrumbs');
-  const base = document.createElement('button');
-  base.textContent = 'Workspace';
-  base.addEventListener('click', () => overview());
-  const links = [base];
-  for (let item = items.get(selected); item; item = items.get(item.parent)) {
-    const current = item;
-    const button = document.createElement('button');
-    button.textContent = current.title;
-    button.addEventListener('click', () => focus(current.id, true));
-    links.splice(1, 0, '›', button);
-  }
-  trail.replaceChildren(...links);
+  updateBreadcrumbs();
   byId('jump').value = selected ?? '';
   report();
 }
 
-function updateJump() {
+function updateCompositionControls() {
   const jump = byId('jump');
   const options = [new Option('Focus…', '')];
   for (const item of items.values()) if (item.opacity > 0) options.push(new Option(item.title, item.id));
   jump.replaceChildren(...options);
   jump.value = selected ?? '';
+  const hasContent = options.length > 1;
+  jump.disabled = !hasContent;
+  byId('select-text').disabled = !hasContent;
+  const firstContent = !empty.hidden && hasContent;
+  empty.hidden = hasContent;
+  return firstContent;
 }
 
 function overview(manual = true, animate = true) {
@@ -260,10 +306,9 @@ function reconcile(snapshot) {
     items.set(item.id, item);
     applyMount(item);
   }
-  updateJump();
+  const firstContent = updateCompositionControls();
   select(changedGeneration ? null : selected);
-  if (changedGeneration) overview(false, false);
-  byId('empty').hidden = items.size > 0;
+  if (changedGeneration || (firstContent && follow && overviewMode)) overview(false, false);
 }
 
 let stream;
@@ -272,7 +317,7 @@ function connect() {
   stream = new EventSource(endpoint('events'));
   stream.onmessage = event => {
     const update = JSON.parse(event.data);
-    if (update.type === 'status') status(update.text);
+    if (update.type === 'status') showActivity(update.text, update.kind);
     if (update.type === 'snapshot') {
       if (update.rendererId) rendererId = update.rendererId;
       if (update.demo != null) byId('demo').hidden = !update.demo;
@@ -288,15 +333,17 @@ function connect() {
         applyMount(item);
       }
       revision = update.revision;
-      updateJump();
+      const firstContent = updateCompositionControls();
       select(selected);
-      byId('empty').hidden = items.size > 0;
-      if (follow && update.guidance?.rendererId === rendererId && update.guidance.epoch === epoch) {
+      if (follow && update.guidance?.rendererId === rendererId && update.guidance.epoch === epoch &&
+          items.get(update.guidance.id)?.opacity > 0) {
         focus(update.guidance.id, false);
+      } else if (firstContent && follow && overviewMode) {
+        overview(false, false);
       }
     }
   };
-  stream.onerror = () => status('Reconnecting');
+  stream.onerror = () => showActivity('Reconnecting', 'busy');
 }
 connect();
 
@@ -326,6 +373,12 @@ function travelHistory(step) {
   fly(target, false);
 }
 
+const interactive = 'button,input,select,textarea,label,a[href],summary,[contenteditable]:not([contenteditable="false"]),' +
+  '[role="button"],[role="link"],[tabindex],[data-native-scroll],[data-no-pan]';
+const isInteractive = target => {
+  const element = target instanceof Element ? target.closest(interactive) : null;
+  return element && element !== viewport;
+};
 const scrollable = target => target.closest('input,select,textarea,[data-native-scroll]');
 viewport.addEventListener('wheel', event => {
   if (!event.ctrlKey && scrollable(event.target)) return;
@@ -345,8 +398,9 @@ function beginDrag(event) {
 }
 
 viewport.addEventListener('pointerdown', event => {
+  const onBackground = !event.target.closest('.composition');
   if (event.pointerType === 'touch') {
-    if (event.target.closest('button,input,select,textarea,a,[data-native-scroll]')) return;
+    if (isInteractive(event.target) || (selectingText && !onBackground)) return;
     touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (touches.size === 1) beginDrag(event);
     if (touches.size === 2) {
@@ -357,13 +411,23 @@ viewport.addEventListener('pointerdown', event => {
     }
     return;
   }
-  if (event.button === 1 || (event.button === 0 && (space || !event.target.closest('.composition')))) {
+  if (drag || pendingDrag) return;
+  if (event.button === 1) {
     event.preventDefault();
     beginDrag(event);
+  } else if (event.button === 0 && (space || (!isInteractive(event.target) && (!selectingText || onBackground)))) {
+    event.preventDefault();
+    viewport.focus({ preventScroll: true });
+    pendingDrag = event;
   }
 });
 
-viewport.addEventListener('pointermove', event => {
+window.addEventListener('pointermove', event => {
+  if (pendingDrag?.pointerId === event.pointerId &&
+      Math.hypot(event.clientX - pendingDrag.clientX, event.clientY - pendingDrag.clientY) >= 4) {
+    beginDrag(pendingDrag);
+    pendingDrag = undefined;
+  }
   if (touches.has(event.pointerId)) touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
   if (pinch && touches.size === 2) {
     const [a, b] = [...touches.values()];
@@ -383,8 +447,9 @@ viewport.addEventListener('pointermove', event => {
 });
 
 function endGesture(event) {
-  touches.delete(event.pointerId);
-  if (drag?.id === event.pointerId || pinch) {
+  if (pendingDrag?.pointerId === event.pointerId) pendingDrag = undefined;
+  const wasTouch = touches.delete(event.pointerId);
+  if (drag?.id === event.pointerId || (pinch && wasTouch)) {
     drag = undefined;
     pinch = undefined;
     viewport.classList.remove('panning');
@@ -392,10 +457,10 @@ function endGesture(event) {
     report();
   }
 }
-for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) viewport.addEventListener(type, endGesture);
+for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) window.addEventListener(type, endGesture);
 
 viewport.addEventListener('click', event => {
-  if (event.target.closest('button,input,select,textarea,a,[role="button"]') || getSelection()?.type === 'Range') return;
+  if (isInteractive(event.target) || getSelection()?.type === 'Range') return;
   const node = event.target.closest('.composition');
   if (node && node.id.slice(8) !== selected) {
     select(node.id.slice(8));
@@ -404,14 +469,13 @@ viewport.addEventListener('click', event => {
 });
 
 viewport.addEventListener('dblclick', event => {
-  if (event.target.closest('button,input,select,textarea,a,[role="button"]') || getSelection()?.type === 'Range') return;
+  if (selectingText || isInteractive(event.target)) return;
   const node = event.target.closest('.composition');
   if (node) focus(node.id.slice(8), true);
 });
 
-const keyboardControl = event => event.target.closest('input, select, textarea, button, a, [contenteditable="true"]');
 window.addEventListener('keydown', event => {
-  if (keyboardControl(event)) return;
+  if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || isInteractive(event.target)) return;
   if (event.code === 'Space') { space = true; event.preventDefault(); }
   if (event.target !== viewport) return;
   const movement = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
@@ -428,7 +492,7 @@ window.addEventListener('keydown', event => {
   if (event.key === 'Home') overview();
 });
 window.addEventListener('keyup', event => { if (event.code === 'Space') space = false; });
-window.addEventListener('blur', () => { space = false; });
+window.addEventListener('blur', () => { space = false; pendingDrag = undefined; });
 new ResizeObserver(() => {
   if (overviewMode && items.size && !animation && viewport.clientWidth >= 32 && viewport.clientHeight >= 32) {
     camera = fit([...items.values()]);
@@ -444,14 +508,20 @@ window.addEventListener('pagehide', () => {
 });
 
 byId('overview').onclick = () => overview();
+byId('workspace-crumb').onclick = () => overview();
 byId('jump').onchange = event => {
   if (event.target.value) focus(event.target.value, true);
   else overview();
 };
 byId('back').onclick = () => travelHistory(-1);
 byId('forward').onclick = () => travelHistory(1);
-byId('zoom-out').onclick = () => zoomBy(1 / 1.38);
-byId('zoom-in').onclick = () => zoomBy(1.38);
+byId('select-text').onclick = event => {
+  selectingText = !selectingText;
+  viewport.classList.toggle('selecting', selectingText);
+  event.currentTarget.setAttribute('aria-pressed', String(selectingText));
+  const selection = getSelection();
+  if (!selectingText && viewport.contains(selection?.anchorNode)) selection.removeAllRanges();
+};
 byId('follow').onclick = () => {
   follow = !follow;
   epoch++;
@@ -469,7 +539,7 @@ byId('export').onclick = async () => {
     download.download = 'contextarium-workspace.json';
     download.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-  } catch (error) { status(error.message); }
+  } catch (error) { showActivity(error.message, 'error'); }
 };
 byId('import').onclick = () => byId('file').click();
 byId('file').onchange = () => {
@@ -484,11 +554,10 @@ byId('file').onchange = () => {
       if (file.size > 8_000_000) throw new Error('Workspace file is too large');
       const base = { generation, revision };
       await post('import', { document: JSON.parse(await file.text()), base });
-      status('Workspace imported');
-    } catch (error) { status(error.message); }
+    } catch (error) { showActivity(error.message, 'error'); }
   }, { once: true });
   dialog.showModal();
 };
-byId('scene').onchange = () => post('demo', { action: byId('scene').value }).catch(error => status(error.message));
-byId('demo-update').onclick = () => post('demo', { action: 'update' }).catch(error => status(error.message));
+byId('scene').onchange = () => post('demo', { action: byId('scene').value }).catch(error => showActivity(error.message, 'error'));
+byId('demo-update').onclick = () => post('demo', { action: 'update' }).catch(error => showActivity(error.message, 'error'));
 updateHistory();

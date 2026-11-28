@@ -107,6 +107,8 @@ test('coalescing publishes the current intent while foreground remains responsiv
     throw new Error('Timed out');
   };
   coordinator.configure(true);
+  coordinator.observe({ user: '/contextarium:feedback file The canvas loses focus' });
+  coordinator.observe({ user: '/contextarium/feedback The canvas is difficult to navigate' });
   coordinator.observe({ user: 'first' });
   coordinator.observe({ user: 'second' });
   await until(() => jobs.length === 1);
@@ -132,7 +134,7 @@ test('coalescing publishes the current intent while foreground remains responsiv
 test('transport serves revisioned snapshots and exposes only renderer operations', async () => {
   const workspace = new Workspace('a', document(card('map')));
   const server = await startWorkspaceServer({
-    workspace, status: () => 'Ready', onImport: () => {}, onPresentation: () => {},
+    workspace, activity: () => ({ text: 'Ready', kind: 'idle' }), onImport: () => {}, onPresentation: () => {},
   });
   const address = server.open('view');
   const url = new URL(address);

@@ -51,7 +51,12 @@ test('native adapter feeds attributed conversation to a workflow and publishes i
     }
   })();
   try {
-    assert.equal((await invoke('inspect_workspace', {})).workspace.revision, 0);
+    const initial = await invoke('inspect_workspace', {});
+    assert.equal(initial.workspace.revision, 0);
+    assert.deepEqual(initial.workspace.compositions, []);
+    assert.equal(initial.status, 'Automatic composition paused');
+    const snapshot = await eventually(() => events.find(message => message.type === 'snapshot'));
+    assert.deepEqual(snapshot.snapshot.compositions, []);
     await assert.rejects(() => invoke('request_visualization', {}), /Provide a visualization intent/);
     assert.deepEqual(await invoke('set_automatic_composition', { enabled: true }), { automatic: true });
     event('user.message', { interactionId: 'human', messageId: 'user', content: 'Focus on the estuary' });
@@ -64,6 +69,9 @@ test('native adapter feeds attributed conversation to a workflow and publishes i
     assert.equal(update.upsert[0].id, 'result-1');
     assert.deepEqual(fixture.jobs[0].args.conversation, [{ user: 'Focus on the estuary', assistant: 'Use a new composition' }]);
     assert.match(fixture.jobs[0].prompt, /^# Author a Contextarium workspace/);
+    assert.doesNotMatch(fixture.jobs[0].prompt, /# Report Contextarium feedback/);
+    assert.deepEqual(events.filter(message => message.type === 'status' && message.kind === 'busy').map(message => message.text),
+      ['Composition queued', 'Composing']);
     assert.equal(fixture.jobs[0].options.notifyOnComplete, false);
     assert.equal(Object.hasOwn(fixture.jobs[0].agent, 'tools'), false);
     assert.deepEqual(await invoke('set_automatic_composition', { enabled: false }), { automatic: false });

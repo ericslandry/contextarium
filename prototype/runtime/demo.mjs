@@ -15,11 +15,11 @@ export async function openDemo() {
   const relay = await fixture('relay');
   const reading = await fixture('reading');
   const workspace = new Workspace('demo', relay);
-  let status = 'Relay architecture';
+  let activity;
   let presentation;
   let server;
   let sequence = 0;
-  const setStatus = value => { status = value; server?.broadcastStatus(value); };
+  const setStatus = (text, kind = 'notice') => { activity = { text, kind }; server?.broadcastStatus(activity); };
   const coordinator = new Coordinator({
     workspace, presentation: () => presentation, onStatus: setStatus, delay: 80,
     async compose(input, signal) {
@@ -37,21 +37,22 @@ export async function openDemo() {
         css: '.finding { background: #294335; color: #edf5d9; height: 100%; padding: 22px; border-radius: 14px; }' +
           'h2 { font: 34px Georgia; margin: 0 0 10px; } p { font-size: 19px; margin: 0; }',
         opacity: existing ? 0.8 : 1,
-      }], remove: [], focusId: 'demo-update' };
+      }], remove: [], focusId: parent ? 'demo-update' : null };
     },
   });
   const observer = observeForeground('demo', turn => coordinator.observe(turn));
   coordinator.configure(true);
+  setStatus('', 'idle');
   server = await startWorkspaceServer({
     workspace,
-    status: () => status,
+    activity: () => activity,
     onPresentation: value => { presentation = value; },
     onImport: () => { coordinator.reset(); setStatus('Workspace imported'); },
     demo(action) {
       if (action === 'relay' || action === 'reading') {
         coordinator.reset();
         const result = workspace.import(action === 'relay' ? relay : reading, workspace.ticket());
-        setStatus(action === 'relay' ? 'Relay architecture' : 'Reading room');
+        setStatus('', 'idle');
         return result;
       }
       if (action !== 'update') throw new Error('Unknown demo action');

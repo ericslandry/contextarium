@@ -13,7 +13,7 @@ node prototype/runtime/demo.mjs
 
 Open the printed loopback URL in Edge or Chromium. Select the two scenes from the demo menu and use **Run demo update** to feed a synthetic completed conversation into the same observer, coordinator, authority and renderer used in the plugin. The demo does not connect to Copilot.
 
-Use the **Focus…** picker or double-click open space inside a composition to fly to it. Wheel zooms towards the pointer. Drag the empty background, hold Space while dragging, or use the middle mouse button to pan. On a focused workspace, arrow keys pan and plus/minus zoom. Touch supports pan and pinch. **Back**, **Forward**, **Overview** and breadcrumbs navigate viewpoints. Manual navigation turns **Follow** off. Re-enable it explicitly to accept guidance again.
+Use the **Focus…** picker or double-click a composition to fly to it. Wheel zooms towards the pointer. Drag the canvas to pan. Turn on **Select text** to highlight content, and hold Space or use the middle mouse button to pan in that mode. On a focused workspace, arrow keys pan and plus/minus zoom. Touch supports pan and pinch. **Back**, **Forward**, **Overview** and breadcrumbs navigate viewpoints. Manual navigation turns **Follow** off. Re-enable it explicitly to accept guidance again.
 
 ## Install in GitHub Copilot Desktop
 

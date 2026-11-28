@@ -64,7 +64,7 @@ function validateDocument(document) {
 }
 
 export class Workspace {
-  #items;
+  #items = new Map();
   #revision = 0;
   #generation = 0;
   #freshness = 0;
@@ -73,7 +73,7 @@ export class Workspace {
 
   constructor(sessionId, initialDocument) {
     this.sessionId = sessionId;
-    this.#items = validateDocument(initialDocument);
+    if (initialDocument !== undefined) this.#items = validateDocument(initialDocument);
   }
 
   ticket() {
