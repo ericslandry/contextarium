@@ -14,14 +14,16 @@ test('native adapter feeds attributed conversation to a workflow and publishes i
       return next(specifier, context);
     },
   });
-  try { await import('../extensions/spatial/extension.mjs'); }
+  try { await import('../../plugins/contextarium/extensions/contextarium/extension.mjs'); }
   finally { hooks.deregister(); }
 
   const { canvas } = fixture;
+  assert.equal(canvas.id, 'contextarium-experiment');
+  assert.equal(canvas.displayName, 'Contextarium');
   const sessionId = 'native-sdk-fixture';
   const instanceId = 'native-canvas-instance';
   const invoke = (name, input) => canvas.actions.find(action => action.name === name).handler({
-    sessionId, instanceId, extensionId: 'spatial', canvasId: canvas.id, actionName: name, input,
+    sessionId, instanceId, extensionId: 'contextarium', canvasId: canvas.id, actionName: name, input,
   });
   const eventually = async check => {
     for (let tries = 0; tries < 100; tries++) {

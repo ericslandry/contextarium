@@ -1,7 +1,0 @@
-{
-  "name": "contextarium-redesign",
-  "version": "0.1.0",
-  "description": "The Contextarium shared-document spatial workspace prototype.",
-  "extensions": "./extensions",
-  "skills": "./skills"
-}

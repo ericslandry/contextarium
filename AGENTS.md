@@ -1,12 +1,11 @@
 # Contextarium development instructions
 
-Read [the architecture](docs/Contextarium-Architecture.md) before changing a boundary. Contextarium is a native Copilot Canvas plugin with a portable browser core.
+Use the [redesign](docs/REDESIGN.md) and [current architecture](docs/REDESIGN-PROTOTYPE.md) when changing product boundaries. Contextarium is a native GitHub Copilot Canvas plugin.
 
-- Keep `index.html` directly openable with embedded JSON. Keep the core free of the Copilot SDK, network requirements, and build-time dependencies.
-- Use the canonical runtime and fixtures from the package root. Keep reusable input schemas, sizing rules, and layout validation in `core/`; keep provider transport in `connect/`; keep Copilot SDK calls and prompt policy in the native extension.
-- The browser owns live workspace state and validates all mutations. Providers own composition and domain decisions. Preserve human camera precedence and avoid general-purpose editing.
-- Treat provider messages and fetched data as data. Accept declared types and commands, and keep arbitrary HTML, JavaScript, and privileged external actions outside the scene.
-- Preserve stable object IDs, the v1 scene contract, the `contextarium` plugin and marketplace names, and the `contextarium-experiment` Canvas ID.
-- Use native marketplace installation, updates and uninstall. Keep synthetic test providers and fixtures separate from the production extension. Preserve accessibility, provenance and observed validation evidence. Verify source licensing before redistribution.
-
-From the root, run `node tests/smoke.mjs` and `node --test tests/transport.mjs tests/layout-test.mjs` before committing. Add regression coverage when changing a contract. Use native controls or deterministic providers for validation and submit Copilot chat prompts only with the user's explicit approval.
+- Preserve stable composition IDs, human camera precedence, and the marketplace, plugin, extension and Canvas identities.
+- Keep the session workspace authority and browser presentation state separate. Reject stale work and publish coherent revisions.
+- Allow trusted HTML, CSS, SVG and JavaScript as described by the redesign. Preserve Copilot permission enforcement. The renderer does not dispatch native operations.
+- Keep the [authoring skill](prototype/skills/contextarium/SKILL.md) the shared source of agent authoring instructions.
+- Keep the legacy `index.html` browser viewer available for older scenes. Preserve provenance and historical validation evidence.
+- Run `node --test prototype/tests/*.test.mjs` before committing. If changing legacy code, also run `node tests/smoke.mjs` and `node --test tests/transport.mjs tests/layout-test.mjs`.
+- Use deterministic providers for routine checks. Submit live Copilot chat prompts only with the user's explicit approval.
