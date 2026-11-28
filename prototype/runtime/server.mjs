@@ -7,6 +7,11 @@ const files = {
   '': ['index.html', 'text/html; charset=utf-8'],
   'spatial.css': ['spatial.css', 'text/css; charset=utf-8'],
   'spatial.mjs': ['spatial.mjs', 'text/javascript; charset=utf-8'],
+  'environment.mjs': ['environment.mjs', 'text/javascript; charset=utf-8'],
+  'bricolage-grotesque.woff2': ['fonts/bricolage-grotesque.woff2', 'font/woff2'],
+  'ibm-plex-sans.woff2': ['fonts/ibm-plex-sans.woff2', 'font/woff2'],
+  'ibm-plex-mono.woff2': ['fonts/ibm-plex-mono.woff2', 'font/woff2'],
+  'ibm-plex-mono-medium.woff2': ['fonts/ibm-plex-mono-medium.woff2', 'font/woff2'],
 };
 
 async function requestJson(request) {

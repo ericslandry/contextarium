@@ -8,33 +8,36 @@
   <link rel="stylesheet" href="spatial.css">
 </head>
 <body>
-  <header class="masthead">
-    <div class="brand"><span class="mark" aria-hidden="true">◎</span><strong>Contextarium</strong></div>
-    <nav class="navigation" aria-label="Camera navigation">
-      <button id="back" type="button" aria-label="Back to previous view" title="Back">←</button>
-      <button id="forward" type="button" aria-label="Forward to next view" title="Forward">→</button>
-      <button id="overview" type="button">Overview</button>
-    </nav>
-    <div class="actions">
-      <button id="follow" type="button" aria-pressed="true" title="Allow Copilot to guide the camera">Follow</button>
-      <button id="import" type="button" title="Open a trusted executable workspace">Import</button>
-      <button id="export" type="button">Export</button>
-      <input id="file" type="file" accept=".json,application/json" hidden>
-    </div>
-  </header>
-  <div class="trail">
-    <nav id="breadcrumbs" aria-label="Spatial breadcrumbs"><button id="workspace-crumb" type="button" aria-current="location">Workspace</button></nav>
-    <select id="jump" aria-label="Focus a composition"><option value="">Focus…</option></select>
-    <button id="select-text" type="button" aria-pressed="false" title="Toggle text selection mode">Select text</button>
-    <div id="demo" class="demo" hidden>
-      <select id="scene" aria-label="Demonstration scene">
-        <option value="relay">Relay architecture</option>
-        <option value="reading">Reading room</option>
-      </select>
-      <button id="demo-update" type="button">Run demo update</button>
+  <div id="canvas-controls">
+    <header class="masthead">
+      <div class="brand capsule"><span class="mark" aria-hidden="true">◎</span><strong>Contextarium</strong></div>
+      <nav class="navigation capsule" aria-label="Camera navigation">
+        <button id="back" type="button" aria-label="Back to previous view" title="Back">←</button>
+        <button id="forward" type="button" aria-label="Forward to next view" title="Forward">→</button>
+        <button id="overview" type="button">Overview</button>
+      </nav>
+      <div class="actions capsule">
+        <button id="follow" type="button" aria-pressed="true" title="Allow Copilot to guide the camera">Follow</button>
+        <button id="import" type="button" title="Open a trusted executable workspace">Import</button>
+        <button id="export" type="button">Export</button>
+        <input id="file" type="file" accept=".json,application/json" hidden>
+      </div>
+    </header>
+    <div class="trail">
+      <nav id="breadcrumbs" class="capsule" aria-label="Spatial breadcrumbs"><button id="workspace-crumb" type="button" aria-current="location">Workspace</button></nav>
+      <select id="jump" class="capsule" aria-label="Focus a composition"><option value="">Focus…</option></select>
+      <button id="select-text" class="capsule" type="button" aria-pressed="false" title="Toggle text selection mode">Select text</button>
+      <div id="demo" class="demo capsule" hidden>
+        <select id="scene" aria-label="Demonstration scene">
+          <option value="relay">Relay architecture</option>
+          <option value="reading">Reading room</option>
+        </select>
+        <button id="demo-update" type="button">Run demo update</button>
+      </div>
     </div>
   </div>
   <main id="viewport" aria-label="Spatial workspace" tabindex="0" aria-describedby="navigation-hint">
+    <canvas id="backdrop" aria-hidden="true"></canvas>
     <div id="world"></div>
     <div id="empty" hidden>
       <div><h1>Your workspace is empty</h1><p>Ask Copilot to visualize something from this conversation, or import a workspace.</p></div>

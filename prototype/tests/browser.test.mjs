@@ -98,6 +98,8 @@ test('browser renders both scenes, publishes without stealing the camera, and cl
       assert.equal(await evaluate("getComputedStyle(document.querySelector('.relay-board')).backgroundColor"), 'rgb(22, 52, 62)');
       assert.equal(await evaluate("document.querySelector('#surface-relay svg').ownerDocument === document"), true);
       assert.equal(await evaluate("document.querySelector('#viewport').getBoundingClientRect().bottom === innerHeight"), true);
+      assert.equal(await evaluate("document.querySelector('#viewport').getBoundingClientRect().top === 0"), true);
+      assert.equal(await evaluate("document.querySelector('#backdrop').width === innerWidth"), true);
       assert.equal(await present('[aria-label="Zoom in"], [aria-label="Zoom out"]'), false);
       await eventually(() => present('#activity[data-kind="idle"]'), 'quiet canvas while idle');
       await screenshot('relay-overview');
@@ -115,12 +117,18 @@ test('browser renders both scenes, publishes without stealing the camera, and cl
         return { x: left + 8, y: top + 8 };
       })()`);
       const deltaY = -180;
-      await evaluate("document.querySelector('#demo-update').click()");
       await rpc('Input.dispatchMouseEvent', { type: 'mouseWheel', deltaX: 0, deltaY, ...wheel });
-      await eventually(() => present('#activity[data-kind="busy"]'), 'background activity indicator');
       const wheelZoom = initialZoom * Math.exp(-deltaY * 0.0018);
       await eventually(() => evaluate("Math.abs(new DOMMatrix(getComputedStyle(document.querySelector('#world')).transform).a - " + wheelZoom + ") < 0.0001"), 'wheel zoom applied');
       const manual = await evaluate("document.querySelector('#world').style.transform");
+      await evaluate(`{
+        const activity = document.querySelector('#activity');
+        window.observedActivity = [];
+        new MutationObserver(records => window.observedActivity.push(activity.dataset.kind, ...records.map(record => record.oldValue)))
+          .observe(activity, { attributeFilter: ['data-kind'], attributeOldValue: true });
+        document.querySelector('#demo-update').click();
+      }`);
+      await eventually(() => evaluate("window.observedActivity.includes('busy')"), 'background activity indicator');
       await eventually(() => present('#surface-demo-update'), 'coalesced background publication');
       await eventually(() => evaluate("document.querySelector('#status').textContent === 'Workspace updated'"), 'publication feedback');
       assert.equal(await evaluate("document.activeElement === document.querySelector('#breadcrumbs button:last-child')"), true);
@@ -147,6 +155,10 @@ test('browser renders both scenes, publishes without stealing the camera, and cl
       await eventually(() => present('[data-marker]'), 'imported executable composition');
       assert.equal(await evaluate("document.querySelector('[data-marker]').textContent"), 'mounted');
       assert.equal(await evaluate("document.activeElement.id"), 'workspace-crumb');
+      await evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
+      const importedCamera = await transform();
+      await wait(120);
+      assert.equal(await transform(), importedCamera, 'import settles the previous flight');
       await evaluate("document.querySelector('#scene').value='reading'; document.querySelector('#scene').dispatchEvent(new Event('change'))");
       await eventually(() => present('#surface-essay'), 'editorial reading scene');
       assert.equal(await evaluate('window.cleanupCount'), 1);
@@ -154,8 +166,9 @@ test('browser renders both scenes, publishes without stealing the camera, and cl
       await resize(430, 660);
       await evaluate("document.querySelector('#jump').value='essay'; document.querySelector('#jump').dispatchEvent(new Event('change'))");
       await eventually(() => evaluate("document.querySelector('#breadcrumbs').textContent.includes('The right to revise')"), 'reading breadcrumb');
-      await wait(750);
+      await eventually(() => present('#back:not(:disabled)'), 'reading focus has reached its endpoint');
       assert.equal(await evaluate("document.querySelector('#surface-essay').getBoundingClientRect().width > 360"), true);
+      assert.equal(await evaluate("document.querySelector('#surface-essay').getBoundingClientRect().top > document.querySelector('#canvas-controls').getBoundingClientRect().bottom"), true);
       assert.equal(await evaluate("parseFloat(getComputedStyle(document.querySelector('.columns p')).fontSize) * document.querySelector('.essay').getBoundingClientRect().width / document.querySelector('.essay').offsetWidth >= 13"), true);
       assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth"), true);
       assert.equal(await evaluate("document.querySelector('#select-text').offsetTop === document.querySelector('#jump').offsetTop"), true);
@@ -212,6 +225,13 @@ test('browser renders both scenes, publishes without stealing the camera, and cl
       await evaluate("document.querySelector('#demo-update').click()");
       await eventually(() => present('#surface-demo-update'), 'first publication after manual navigation');
       assert.equal(await transform(), pannedEmpty);
+
+      await rpc('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+      await evaluate("document.querySelector('#jump').value='demo-update'; document.querySelector('#jump').dispatchEvent(new Event('change'))");
+      assert.equal(await evaluate(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => {
+        const focused = document.querySelector('#surface-demo-update').getBoundingClientRect();
+        resolve(Math.abs((focused.left + focused.right) / 2 - innerWidth / 2) < 1);
+      })))`), true);
       assert.deepEqual(errors, []);
     } finally {
       socket?.close();
