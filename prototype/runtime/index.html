@@ -1,0 +1,58 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contextarium</title>
+  <link rel="stylesheet" href="spatial.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand"><span class="mark" aria-hidden="true">◎</span><strong>Contextarium</strong></div>
+    <nav class="navigation" aria-label="Camera navigation">
+      <button id="back" type="button" aria-label="Back to previous view" title="Back">←</button>
+      <button id="forward" type="button" aria-label="Forward to next view" title="Forward">→</button>
+      <button id="overview" type="button">Overview</button>
+    </nav>
+    <div class="actions">
+      <button id="follow" type="button" aria-pressed="true" title="Allow Copilot to guide the camera">Follow</button>
+      <button id="import" type="button" title="Open a trusted executable workspace">Import</button>
+      <button id="export" type="button">Export</button>
+      <input id="file" type="file" accept=".json,application/json" hidden>
+    </div>
+  </header>
+  <div class="trail">
+    <nav id="breadcrumbs" aria-label="Spatial breadcrumbs">Workspace</nav>
+    <select id="jump" aria-label="Focus a composition"><option value="">Focus…</option></select>
+    <div id="demo" class="demo" hidden>
+      <select id="scene" aria-label="Demonstration scene">
+        <option value="relay">Relay architecture</option>
+        <option value="reading">Reading room</option>
+      </select>
+      <button id="demo-update" type="button">Run demo update</button>
+    </div>
+  </div>
+  <main id="viewport" aria-label="Spatial workspace" tabindex="0" aria-describedby="navigation-hint">
+    <div id="world"></div>
+    <div id="empty" hidden>Ask Copilot to visualize a topic, or import a workspace.</div>
+  </main>
+  <footer class="controls">
+    <span id="status" role="status">Connecting</span>
+    <span id="navigation-hint">Wheel to zoom · Space + drag to pan</span>
+    <div class="zoom" role="group" aria-label="Zoom">
+      <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+      <output id="scale" aria-label="Camera scale">100%</output>
+      <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+    </div>
+  </footer>
+  <dialog id="trust">
+    <form method="dialog">
+      <h2>Open executable workspace?</h2>
+      <p>Workspace files can run JavaScript here. Open a file only when you trust its author and contents.</p>
+      <div class="dialog-actions"><button value="cancel">Cancel</button><button value="open">Open workspace</button></div>
+    </form>
+  </dialog>
+  <script type="module" src="spatial.mjs"></script>
+</body>
+</html>
