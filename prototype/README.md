@@ -17,7 +17,15 @@ Use the **Focus…** picker or double-click open space inside a composition to f
 
 ## Install in GitHub Copilot desktop
 
-Use a local checkout of the development branch.
+### GitHub marketplace
+
+1. In **Customize → Add → Manage marketplaces**, add `ericslandry/contextarium` or refresh the existing **contextarium** marketplace.
+2. In that marketplace, install `contextarium-redesign@contextarium`.
+3. In **Customize → Installed**, find **Contextarium Redesign** under Canvas and choose **New session → No repository**. The starter workspace opens without a chat prompt.
+
+### Local development marketplace
+
+Use a local checkout of the repository.
 
 1. In **Customize → Add → Manage marketplaces**, add the absolute path to the checkout's `prototype` directory.
 2. Select **Customize → Add → Plugin** and install `contextarium-redesign@contextarium-redesign`.
@@ -25,7 +33,7 @@ Use a local checkout of the development branch.
 4. To start live composition, ask Copilot to use **request_visualization** for an explicit visualization. To continuously curate completed conversation turns, ask it to enable **set_automatic_composition**. Automatic composition is initially paused in every session. Both live paths may consume Copilot model usage. Pause it through the same action.
 5. For this local marketplace, **Manage marketplaces → Remove and uninstall** removes the prototype. The shipping Contextarium plugin has its own identity.
 
-The branch marketplace catalog also includes the redesign as a separate entry. The local installation procedure is the verified path for this prototype.
+If you have both the local and GitHub copies, choose the launcher labelled **Plugin: contextarium-redesign:spatial** and use a fresh session after changing which copy is installed.
 
 ## Open and save workspaces
 
