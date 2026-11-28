@@ -1,6 +1,6 @@
 {
   "name": "contextarium",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A living spatial workspace with agent-authored compositions in GitHub Copilot Canvas.",
   "repository": "https://github.com/ericslandry/contextarium",
   "extensions": "plugins/contextarium/extensions/",
