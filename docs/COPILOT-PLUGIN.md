@@ -1,6 +1,6 @@
 # Contextarium for GitHub Copilot Canvas
 
-Contextarium 0.4.0 upgrades the existing `contextarium@contextarium` plugin. The package uses the existing extension directory and `contextarium-experiment` Canvas ID. It includes the spatial runtime and bundled skills. Copilot loads them from the installed package without a separate checkout or build.
+Contextarium 0.4.1 upgrades the existing `contextarium@contextarium` plugin. The package uses the existing extension directory and `contextarium-experiment` Canvas ID. It includes the spatial runtime and bundled skills. Copilot loads them from the installed package without a separate checkout or build.
 
 ## Install or update in Copilot Desktop
 
@@ -14,6 +14,10 @@ The separate `contextarium-redesign` preview can be uninstalled when you have fi
 ## Share feedback
 
 Use `/contextarium:feedback <details>` in the Copilot app to draft a bug report or improvement in chat. Use `/contextarium:feedback file <details>` when you want Copilot to file the issue in the Contextarium repository.
+
+## Composition failures
+
+The canvas activity indicator shows the error or termination reason Copilot returns. The existing workspace is preserved, and a later composition request can proceed. The native `inspect_workspace` action reports the most recent attempt and the most recent failure for this session. Copilot's Dynamic Workflow details also show run time and usage when available. See the [0.4.1 reliability notes](WORKFLOW-RELIABILITY.md).
 
 ## Workspace compatibility and rollback
 

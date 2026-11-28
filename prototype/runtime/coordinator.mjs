@@ -18,7 +18,9 @@ export class Coordinator {
       this.#pending = undefined;
       clearTimeout(this.#timer);
     }
-    if (!automatic && this.#active?.kind === 'conversation') this.#active.controller.abort();
+    if (!automatic && this.#active?.kind === 'conversation') {
+      this.#active.controller.abort(new Error('Automatic composition paused'));
+    }
     if (changed && !this.#pending && (!this.#active || this.#active.controller.signal.aborted)) {
       this.onStatus(automatic ? 'Automatic composition on' : 'Automatic composition paused', 'notice');
     }
@@ -34,12 +36,14 @@ export class Coordinator {
       this.#pending = { kind: 'conversation' };
       this.#schedule(this.delay);
     }
+    if (this.#active?.kind === 'conversation') this.#active.controller.abort(new Error('Superseded by a newer conversation turn'));
   }
 
   request(intent, context = '') {
     if (this.#closed) return false;
     this.workspace.advanceContext();
     this.#pending = { kind: 'explicit', intent, context };
+    this.#active?.controller.abort(new Error('Superseded by a newer visualization request'));
     this.#schedule(0);
     return true;
   }
@@ -73,22 +77,25 @@ export class Coordinator {
       const showResult = result.status === 'committed' || (result.status === 'unchanged' && request.kind === 'explicit');
       this.onStatus(result.status === 'committed' ? 'Workspace updated' :
         result.status === 'stale' ? 'Superseded update discarded' : 'Workspace is current', showResult ? 'notice' : 'idle');
-    } catch {
-      if (!controller.signal.aborted) this.onStatus('Composition failed', 'error');
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.onStatus(message || 'Composition failed', 'error');
+      }
     } finally {
       this.#active = undefined;
       if (this.#pending) this.#schedule(this.#pending.kind === 'explicit' ? 0 : this.delay);
     }
   }
 
-  reset() {
+  reset(reason = 'Workspace reset') {
     this.#pending = undefined;
     clearTimeout(this.#timer);
-    this.#active?.controller.abort();
+    this.#active?.controller.abort(new Error(reason));
   }
 
   close() {
     this.#closed = true;
-    this.reset();
+    this.reset('Session closed');
   }
 }

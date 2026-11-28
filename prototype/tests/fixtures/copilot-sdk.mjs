@@ -1,7 +1,7 @@
 
 import { setTimeout as delay } from 'node:timers/promises';
 
-export const fixture = { jobs: [], subscribers: new Set(), runs: new Map() };
+export const fixture = { jobs: [], subscribers: new Set(), runs: new Map(), plans: new Map() };
 export const createCanvas = attributes => attributes;
 export const defineWorkflow = definition => definition;
 
@@ -18,13 +18,14 @@ export async function joinSession({ canvases, workflows }) {
       async start(workflow, options) {
         const runId = String(fixture.runs.size + 1);
         const controller = new AbortController();
-        const job = { controller, args: options.args, options };
+        const plan = fixture.plans.get(options.args.request.intent) ?? {};
+        const job = { runId, controller, args: options.args, options, plan, cancelCount: 0 };
         fixture.jobs.push(job);
-        const run = workflow.run({
+        job.run = workflow.run({
           args: options.args, phase() {},
           async agent(prompt, options) {
             Object.assign(job, { prompt, agent: options });
-            await delay(60, undefined, { signal: controller.signal });
+            await delay(plan.delayMs ?? 60, undefined, { signal: plan.ignoreCancellation ? undefined : controller.signal });
             return {
               remove: [], focusId: null, upsert: [{
                 id: 'result-' + runId, title: 'Integrated candidate', x: 900, y: 600, width: 320, height: 200,
@@ -33,13 +34,39 @@ export async function joinSession({ canvases, workflows }) {
               }],
             };
           },
-        }).then(result => ({ status: 'completed', result }), () => ({ status: 'cancelled' }));
-        fixture.runs.set(runId, { run, controller });
-        return { runId, status: 'running' };
+        }).then(result => ({ runId, attempt: 1, status: 'completed', result, ...plan.outcome }),
+          () => ({ runId, attempt: 1, status: 'cancelled', reason: 'Cancelled in Copilot' }));
+        fixture.runs.set(runId, job);
+        return { runId, attempt: 1, status: 'running' };
       },
-      async waitForRun(runId) { return fixture.runs.get(runId).run; },
-      async cancel(runId) { fixture.runs.get(runId).controller.abort(); },
-      async getRunDetail() { return { agents: [{ activeMs: 60, consumedNanoAiu: 0 }] }; },
+      async waitForRun(runId, { signal } = {}) {
+        const { run, plan } = fixture.runs.get(runId);
+        if (plan.waitError) throw plan.waitError;
+        if (!signal || plan.ignoreCancellation) return run;
+        signal.throwIfAborted();
+        let abort;
+        try {
+          const aborted = new Promise((_, reject) => {
+            abort = () => reject(signal.reason);
+            signal.addEventListener('abort', abort, { once: true });
+          });
+          return await Promise.race([run, aborted]);
+        } finally {
+          signal.removeEventListener('abort', abort);
+        }
+      },
+      async cancel(runId) {
+        const job = fixture.runs.get(runId);
+        job.cancelCount++;
+        job.controller.abort();
+        return job.run;
+      },
+      async getRunDetail(runId) {
+        const { run, plan } = fixture.runs.get(runId);
+        if (plan.detail) return plan.detail;
+        const { status } = await run;
+        return { status, agents: [{ activeMs: 60, consumedNanoAiu: 0 }] };
+      },
     },
   };
 }

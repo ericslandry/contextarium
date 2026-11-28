@@ -38,12 +38,12 @@ const workflow = defineWorkflow({
     name: 'contextarium-compose',
     description: 'Curate the Contextarium workspace in the background.',
     phases: [{ title: 'Compose the workspace' }],
-    limits: { timeoutSeconds: 95, maxTotalSubagents: 1 },
+    limits: { timeoutSeconds: 330, maxTotalSubagents: 1 },
   },
   async run(ctx) {
     ctx.phase('Compose the workspace');
     return ctx.agent(guide + '\n\nCurrent session input (JSON):\n' + JSON.stringify(ctx.args), {
-      schema, timeoutSeconds: 85,
+      schema, timeoutSeconds: 300,
     });
   },
 });
@@ -57,13 +57,48 @@ let server;
 let startingServer;
 let presentation;
 let activity = { text: 'Automatic composition paused', kind: 'idle' };
-let lastUsage = null;
+let lastWorkflow = null;
+let lastWorkflowFailure = null;
 let shutDown = false;
 let activated = false;
 
 function setStatus(text, kind = 'notice') {
   activity = { text, kind };
   server?.broadcastStatus(activity);
+}
+
+const errorMessage = error => error instanceof Error ? error.message : String(error);
+
+function workflowError({ status, error, reason, failure }) {
+  if (error || reason || failure?.reason) return error || reason || failure.reason;
+  if (failure?.type === 'workflow_limit_reached') {
+    return 'Workflow reached its ' + failure.kind + ' limit (' + failure.value + ')';
+  }
+  return 'Workflow ' + status + (failure?.type ? ' (' + failure.type + ')' : '');
+}
+
+async function collectRunDetail(diagnostic, cancellation) {
+  if (cancellation) {
+    const { result, error } = await cancellation;
+    diagnostic.cancelError = error ?? null;
+    diagnostic.hostStatus = result?.status ?? diagnostic.hostStatus;
+    diagnostic.reason ??= result?.reason ?? null;
+  }
+  try {
+    const detail = await session.workflow.getRunDetail(diagnostic.runId);
+    diagnostic.hostStatus = detail.status ?? diagnostic.hostStatus;
+    diagnostic.activeMs = detail.consumed?.activeMs ?? null;
+    diagnostic.consumedNanoAiu = detail.consumed?.nanoAiu ?? null;
+    diagnostic.approvedTimeoutSeconds = detail.approved?.timeoutSeconds ?? null;
+    diagnostic.failure ??= detail.terminal?.failure ?? null;
+    diagnostic.error ??= detail.terminal?.error ?? null;
+    diagnostic.reason ??= detail.terminal?.reason ?? null;
+    diagnostic.agents = detail.agents?.map(({ model, activeMs, consumedNanoAiu }) => ({
+      model: model?.resolved ?? model?.requested ?? null, activeMs, consumedNanoAiu: consumedNanoAiu ?? null,
+    })) ?? null;
+  } catch (error) {
+    diagnostic.detailError = errorMessage(error);
+  }
 }
 
 async function compose(input, signal) {
@@ -80,19 +115,45 @@ async function compose(input, signal) {
       }),
     },
   };
-  const run = await session.workflow.start(workflow, { args: compact, notifyOnComplete: false, logPhaseNames: false });
-  const cancel = () => { session.workflow.cancel(run.runId).catch(() => {}); };
-  signal.addEventListener('abort', cancel, { once: true });
+  const started = performance.now();
+  let run;
+  let result;
+  let failureMessage;
+  let cancellation;
+  const cancel = () => {
+    cancellation ??= session.workflow.cancel(run.runId)
+      .then(result => ({ result }), error => ({ error: errorMessage(error) }));
+  };
   try {
+    run = await session.workflow.start(workflow, { args: compact, notifyOnComplete: false, logPhaseNames: false });
+    signal.addEventListener('abort', cancel, { once: true });
     if (signal.aborted) cancel();
-    const result = await session.workflow.waitForRun(run.runId, { signal });
-    if (result.status !== 'completed') throw new Error('Workflow ' + result.status);
-    const detail = await session.workflow.getRunDetail(run.runId).catch(() => null);
-    lastUsage = detail?.agents?.map(({ model, activeMs, consumedNanoAiu }) =>
-      ({ model: model?.resolved ?? null, activeMs, consumedNanoAiu: consumedNanoAiu ?? null })) ?? null;
+    signal.throwIfAborted();
+    result = await session.workflow.waitForRun(run.runId, { signal });
+    signal.throwIfAborted();
+    if (result.status !== 'completed') throw new Error(workflowError(result));
     return result.result;
+  } catch (error) {
+    if (run && !result) cancel();
+    failureMessage = errorMessage(error);
+    throw error;
   } finally {
     signal.removeEventListener('abort', cancel);
+    const diagnostic = {
+      runId: run?.runId ?? null,
+      attempt: result?.attempt ?? run?.attempt ?? null,
+      status: signal.aborted ? 'cancelled' : result?.status ?? 'error',
+      hostStatus: result?.status ?? null,
+      elapsedMs: Math.round(performance.now() - started),
+      error: result?.error ?? (signal.aborted ? null : failureMessage ?? null),
+      reason: result?.reason ?? (signal.aborted ? errorMessage(signal.reason) : null),
+      failure: result?.failure ?? null,
+      agents: null,
+    };
+    lastWorkflow = diagnostic;
+    if (failureMessage && !signal.aborted) lastWorkflowFailure = diagnostic;
+    // Diagnostic RPCs must never hold up publication or the next request.
+    if (run) void collectRunDetail(diagnostic, cancellation);
   }
 }
 
@@ -105,9 +166,12 @@ const canvas = createCanvas({
   actions: [
     {
       name: 'inspect_workspace',
-      description: 'Read the current workspace, authoring guidance, presentation context and last background usage.',
+      description: 'Read the current workspace, authoring guidance, presentation context and recent workflow diagnostics.',
       inputSchema: emptyInput,
-      handler: async () => ({ workspace: workspace.snapshot(), presentation: presentation ?? null, guide, status: activity.text, lastUsage }),
+      handler: async () => ({
+        workspace: workspace.snapshot(), presentation: presentation ?? null, guide, status: activity.text,
+        lastUsage: lastWorkflow?.agents ?? null, lastWorkflow, lastWorkflowFailure,
+      }),
     },
     {
       name: 'request_visualization',
