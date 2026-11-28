@@ -6,6 +6,10 @@ Contextarium is a native GitHub Copilot Canvas plugin powered by a portable spat
 
 Add `ericslandry/contextarium` in **Customize → Add extension → Manage marketplaces**, then install **contextarium**. Under **Customize → Installed → Canvas**, choose **Contextarium** from the plugin and start a new session. The Canvas can open without submitting a chat prompt. See the [installation and update guide](docs/COPILOT-PLUGIN.md).
 
+## Contextarium Redesign preview
+
+The same marketplace offers **contextarium-redesign** as a separate preview. Refresh the `contextarium` marketplace, install **contextarium-redesign**, and start a fresh **Contextarium Redesign** Canvas session. Automatic curation starts paused. See the [preview installation and demo guide](prototype/README.md).
+
 ## Run without Copilot
 
 - Open [index.html](index.html) directly in a browser for the embedded demo. Use **Import JSON** to try [scene.json](scene.json). From the map, choose **Critical findings** to see semantic zoom and detail loading. Pan or zoom to take camera control. Reset returns to the embedded workspace.
