@@ -1,49 +1,29 @@
 # Contextarium for GitHub Copilot Canvas
 
-Contextarium is a single-plugin marketplace. Its catalog is in `.github/plugin/marketplace.json` and its package manifest is the root `plugin.json`. The catalog installs the repository root as the package, including the canonical runtime and fixtures. The Copilot-specific manifest uses the legacy `extensions` path field, and the native entry point uses the shared connection adapter. The installed package resolves its assets relative to itself. It needs no source checkout, build step, or separate installer.
+Contextarium 0.3.1 upgrades the existing `contextarium@contextarium` plugin. The package uses the existing extension directory and `contextarium-experiment` Canvas ID. Its package includes the spatial runtime, starter compositions and authoring skill. Copilot loads them from the installed package without a separate checkout or build.
 
-## Install in GitHub Copilot desktop
+## Install or update in Copilot Desktop
 
-1. Open **Customize → Add extension → Manage marketplaces**. Builds with a marketplace picker can also expose marketplace settings next to the picker.
-2. Add `ericslandry/contextarium` to follow the default branch.
-3. Select the **contextarium** marketplace, find **contextarium**, and select **Install**.
-4. Open **Customize → Installed**, find **Contextarium** under **Canvas**, and choose the entry labelled **Plugin: contextarium:contextarium**. Select **New session**, then pick a repository or **No repository**. This opens the Canvas without a chat prompt. The `contextarium-experiment` Canvas exposes `authoring_guide`, `inspect_workspace`, `validate_layout`, and the scene actions.
+1. In **Customize → Add → Manage marketplaces**, add `ericslandry/contextarium`. If the **contextarium** marketplace is already registered, use **Refresh catalog**. The historical `copilot-plugin` source branch is also a release channel.
+2. Install **contextarium** from the marketplace, or use **Update** on the installed plugin.
+3. In **Customize → Installed → Canvas**, choose **Contextarium**, labelled **Plugin: contextarium:contextarium**. Open a fresh session with **New session → No repository**. Existing sessions can still have their prior Canvas open.
+4. Automatic composition starts paused. Ask Copilot to use `request_visualization` to request a visual or `set_automatic_composition` to change automatic curation. These actions can use Copilot model requests.
 
-The plugin row on **Customize → Installed** has an enable switch and an actions menu for **Update** and **Uninstall**. An existing session may retain its Canvas until you open a fresh session.
+The separate `contextarium-redesign` preview can be uninstalled when you have finished with its sessions. Export any work you want to preserve before closing an active session. Its workspace exports are compatible with 0.3.1.
+
+## Workspace compatibility and rollback
+
+Open older declarative scene exports with the [0.2.0 browser viewer](https://github.com/ericslandry/contextarium/tree/release/contextarium-0.2.0). Exported redesign workspaces use a different document format and have no automatic converter. Keep the original files when moving between versions. The 0.3.1 import confirmation identifies executable workspaces.
+
+The [0.2.0 rollback source](https://github.com/ericslandry/contextarium/tree/release/contextarium-0.2.0) retains the old plugin and scene reader. If replacing your marketplace registration to use that source, Copilot Desktop may require uninstalling its currently installed plugin first. Export active workspaces before replacing a registration.
 
 ## Manage with Copilot CLI
 
 ```sh
 copilot plugin marketplace add ericslandry/contextarium
-copilot plugin marketplace browse contextarium
-copilot plugin install contextarium@contextarium
-copilot plugin list
 copilot plugin marketplace update contextarium
+copilot plugin install contextarium@contextarium
 copilot plugin update contextarium@contextarium
-copilot plugin disable contextarium@contextarium
-copilot plugin enable contextarium@contextarium
-copilot plugin uninstall contextarium@contextarium
-copilot plugin marketplace remove contextarium
 ```
 
-Use a fresh session when checking changes to discovery or enablement. An older project or user extension can still expose the same Canvas ID. Select the plugin-supplied entry or verify in a repository without the old extension.
-
-## Private repositories and compatibility
-
-GitHub documents authenticated private marketplace access. The installing user needs read access to the repository and must be signed in to GitHub in their Copilot client. Repository and organization policy can affect access and plugin enablement. Keep distribution within the authorized private repository while the runtime’s third-party provenance is being reviewed.
-
-The package targets the local Copilot Canvas host. The manifest uses Copilot-specific executable extensions, so clients that support only portable Agent Plugins 1.0 components will not load this Canvas. The installed desktop host tested during development is GitHub Copilot 1.5.0 with CLI 1.0.115-7 and SDK protocol 4.
-
-## Verified on desktop 1.5.0
-
-- Copilot added the branch-qualified marketplace from the private, user-owned GitHub repository while signed in. Native installation listed the plugin, extension, and Canvas separately from the repository-scoped development Canvas.
-- The remote install populated Copilot's installed-plugin cache with its own copy of the canonical runtime. The cache was a directory, and the runtime blob matched the repository's canonical HTML. The install ran without the experiment's prepared assets.
-- The Canvas rendered and connected in two fresh local sessions, one with **No repository** and one using an unrelated empty Git repository. The unrelated session had no user messages. It opened before any repository trust approval.
-- The native **Update** action upgraded version 0.1.0 to 0.1.1 from the private marketplace. The updated Canvas rendered in another fresh unrelated-repository session. Disabling the plugin disabled its Canvas launcher. Uninstall removed the installed package, and reinstall restored the plugin Canvas. The app can retain a disabled catalog row after uninstall.
-- Local-path marketplace installs on CLI 1.0.115-7 use a live folder. Use the GitHub marketplace source when you want an installation independent of a checkout. No Copilot chat prompts were submitted.
-
-## GitHub references
-
-- [Customize the GitHub Copilot app](https://docs.github.com/en/copilot/how-tos/github-copilot-app/customize-github-copilot-app)
-- [Create and share a plugin marketplace](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/create-and-share-plugin-marketplaces)
-- [Copilot CLI plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference)
+The extension targets Copilot Desktop with native Canvas and Dynamic Workflows. See the [implementation report](REDESIGN-IMPLEMENTATION.md) for verified host behavior and limitations.

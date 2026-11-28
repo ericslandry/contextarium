@@ -5,7 +5,7 @@
 **Development branch** `prototype/clean-redesign`  
 **Prototype package** `contextarium-redesign` 0.1.0
 
-The [prototype](../prototype/) is installable through a separate Copilot marketplace entry and has a browser demo driven by deterministic events. The shipping package retains its existing identity, runtime and entry. The branch catalog adds a separate prototype entry.
+The redesign shipped under the existing Contextarium package as 0.3.1. The historical observations below describe the separately installed preview unless identified as promotion checks. A deterministic browser demo remains available.
 
 | Milestone | Implemented | Verified |
 | --- | --- | --- |
@@ -58,8 +58,12 @@ A fresh native No repository session loaded the updated guide at [e0583ea](https
 
 The Canvas reported **Workspace updated**. The existing Buffer Lab composition gained a graphic whose accessible description specified arrivals of **10, 0, 10, 0**, backlogs of **5, 0, 5, 0**, and service capacity of **5 per tick**. The other two starter compositions remained present, and the overview stayed at **26%** with Follow off. The second approved foreground request paused automatic curation. Once chat returned to idle, the Canvas confirmed the pause and the desktop still showed one workflow. The test used two foreground requests and one background run. It establishes publication and nonblocking behavior for this scenario. The worker model, request accounting, and repeatability across other conversations were not measured.
 
+## Promotion to the Contextarium package
+
+Version 0.3.1 adopts the tested runtime under the existing marketplace, package, extension and Canvas IDs. The observations above apply to the original preview configuration. The production entry uses the same workflow and rendering code. The marketplace keeps one Contextarium entry. In Copilot Desktop 1.5.0, refreshing the existing `copilot-plugin` marketplace and choosing Update reported **Version 0.2.0 to 0.3.0** for `contextarium@contextarium`. The bundled skill appeared under the updated plugin. A fresh no-repository session opened the starter workspace under the original Canvas launcher, and a click on Step changed the queue from zero to one. The upgrade check used no Copilot prompts. The 0.3.1 patch corrects the tab title and shows the paused status on startup. Copilot treats the installed version as current even after a catalog refresh, so the patch uses a new version. Legacy declarative exports can still be opened in the retained 0.2.0 viewer. See the [update and rollback guide](COPILOT-PLUGIN.md).
+
 ## Remaining acceptance
 
-The user can review and exercise the installed prototype without model calls. The explicit live request path is verified. Live automatic curation is verified for both a no-change result and publication of a substantive update. Each tested sequence admitted one run, and pausing produced no additional workflow. Automatic composition defaults to paused per session. This limits model use while the host event behavior is being confirmed. The prototype uses a separate package and Canvas identity during evaluation and a new versioned JSON format. Legacy scene import and eventual shipping identity compatibility are release decisions.
+The user can review and exercise the installed prototype without model calls. The explicit live request path is verified. Live automatic curation is verified for both a no-change result and publication of a substantive update. Each tested sequence admitted one run, and pausing produced no additional workflow. Automatic composition defaults to paused per session. This limits model use while the host event behavior is being confirmed. The prototype uses a separate package and Canvas identity during evaluation and a new versioned JSON format. The promoted package keeps a separate workspace format and preserves older access through the legacy viewer.
 
 Broader native performance, keyboard and screen-reader behavior for authored compositions, live workflow cancellation and usage, and the host's ambient messaging authorization remain open. See the [architecture](REDESIGN-PROTOTYPE.md), [installation guide](../prototype/README.md) and [canonical authoring skill](../prototype/skills/contextarium/SKILL.md).

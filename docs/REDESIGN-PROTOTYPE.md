@@ -1,7 +1,7 @@
 
 # Contextarium prototype architecture
 
-This document describes the executable prototype based on [the agreed redesign](REDESIGN.md) and [the revised feasibility gates](REDESIGN-FEASIBILITY.md). The package under [prototype/](../prototype/) is a separately installable Copilot Canvas plugin.
+This document describes the runtime promoted to Contextarium 0.3.1, based on [the agreed redesign](REDESIGN.md) and [the revised feasibility gates](REDESIGN-FEASIBILITY.md). The existing Contextarium extension registers the runtime and serves the workspace. The runtime, example compositions, bundled skill and deterministic tests live under [prototype/](../prototype/).
 
 ~~~mermaid
 flowchart TB
